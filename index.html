@@ -205,26 +205,6 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
     </div>
   </div>
 
-  <!-- 出现次数统计：整组(红球5枚/蓝球2枚)在最近200期中的出现次数 -->
-  <div class="panel">
-    <h2 class="collapse-head" onclick="togglePanel(this)">🔢 出现次数统计</h2>
-    <div class="panel-body">
-      <div class="filter-row">
-        <label style="min-width:88px;">显示出现次数:</label>
-        <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
-          <input type="checkbox" id="appearToggle">
-          <span class="slider"></span>
-        </label>
-        <span style="font-size:12px;color:#999;" id="appearStatus">未加载数据</span>
-      </div>
-      <div class="filter-row">
-        <label style="min-width:88px;">指定单次值:</label>
-        <select id="appearFilter" style="width:auto;min-width:120px;"><option value="">不限</option></select>
-        <span style="font-size:12px;color:#999;">仅显示出现次数等于所选值的组合</span>
-      </div>
-    </div>
-  </div>
-
   <!-- 标签页 -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('tab5',this)">🎯 前五红球</button>
@@ -283,6 +263,23 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
           <div class="section-body collapsed" id="tailFilter5"></div>
         </div>
       </div>
+    </div>
+
+    <!-- 出现次数统计：整组在最近200期中的出现次数（置于开始预测上方） -->
+    <div class="panel">
+      <h2>🔢 出现次数统计</h2>
+      <div class="filter-row">
+        <label style="min-width:88px;">显示出现次数:</label>
+        <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
+          <input type="checkbox" class="appearToggle" onchange="onAppearToggle(this)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="filter-row">
+        <label style="min-width:88px;">指定单次值:</label>
+        <select class="appearFilter" style="width:auto;min-width:120px;" onchange="onAppearFilter(this)"><option value="">不限</option></select>
+      </div>
+      <div style="font-size:12px;color:#999;margin-top:2px;"><span class="appearStatus">未加载数据</span> · 下拉可选 0~20 次</div>
     </div>
 
     <div class="panel">
@@ -345,6 +342,23 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
         </div>
       </div>
     </div>
+    <!-- 出现次数统计：整组在最近200期中的出现次数（置于开始预测上方） -->
+    <div class="panel">
+      <h2>🔢 出现次数统计</h2>
+      <div class="filter-row">
+        <label style="min-width:88px;">显示出现次数:</label>
+        <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
+          <input type="checkbox" class="appearToggle" onchange="onAppearToggle(this)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="filter-row">
+        <label style="min-width:88px;">指定单次值:</label>
+        <select class="appearFilter" style="width:auto;min-width:120px;" onchange="onAppearFilter(this)"><option value="">不限</option></select>
+      </div>
+      <div style="font-size:12px;color:#999;margin-top:2px;"><span class="appearStatus">未加载数据</span> · 下拉可选 0~20 次</div>
+    </div>
+
     <div class="panel">
       <div class="btn-group-vertical">
         <button class="btn btn-primary" onclick="runWithLoading(predict6)">🔍 开始预测</button>
@@ -388,6 +402,23 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
         </div>
       </div>
     </div>
+    <!-- 出现次数统计：整组在最近200期中的出现次数（置于开始预测上方） -->
+    <div class="panel">
+      <h2>🔢 出现次数统计</h2>
+      <div class="filter-row">
+        <label style="min-width:88px;">显示出现次数:</label>
+        <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
+          <input type="checkbox" class="appearToggle" onchange="onAppearToggle(this)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="filter-row">
+        <label style="min-width:88px;">指定单次值:</label>
+        <select class="appearFilter" style="width:auto;min-width:120px;" onchange="onAppearFilter(this)"><option value="">不限</option></select>
+      </div>
+      <div style="font-size:12px;color:#999;margin-top:2px;"><span class="appearStatus">未加载数据</span> · 下拉可选 0~20 次</div>
+    </div>
+
     <div class="panel">
       <div class="btn-group-vertical">
         <button class="btn btn-primary" onclick="runWithLoading(predictB)">🔍 开始预测</button>
@@ -428,6 +459,8 @@ let recent200Draws = [];        // 最近200期统一数据（最新在前）
 let redComboCount = new Map();  // key: 红球升序join(',') → 近200期出现次数
 let blueComboCount = new Map(); // key: 蓝球升序join(',') → 近200期出现次数
 let countDrawsUsed = 0;         // 实际统计期数（体彩/GitHub=200，mock=10）
+let appearEnabled = false;      // 出现次数统计开关（全局状态，三个标签页同步）
+let appearFilterVal = '';       // 指定单次值（'' = 不限，全局状态）
 
 // ====================== 工具函数 ======================
 function isPrime(n) {
@@ -1181,14 +1214,25 @@ function getComboCount(nums, isBlue) {
 }
 
 function isAppearOn() {
-  const el = document.getElementById('appearToggle');
-  return !!(el && el.checked);
+  return appearEnabled;
 }
 
 function getSelectedAppearValue() {
-  const el = document.getElementById('appearFilter');
-  if (!el || el.value === '') return null;   // null = 不限，不过滤
-  return parseInt(el.value, 10);
+  if (appearFilterVal === '') return null;   // null = 不限，不过滤
+  return parseInt(appearFilterVal, 10);
+}
+
+// 开关切换：更新全局状态并同步所有标签页的开关与下拉禁用状态
+function onAppearToggle(el) {
+  appearEnabled = !!el.checked;
+  document.querySelectorAll('.appearToggle').forEach(c => { if (c !== el) c.checked = appearEnabled; });
+  document.querySelectorAll('.appearFilter').forEach(s => { s.disabled = !appearEnabled; });
+}
+
+// 下拉选择：更新全局值并同步所有标签页的下拉
+function onAppearFilter(el) {
+  appearFilterVal = el.value;
+  document.querySelectorAll('.appearFilter').forEach(s => { if (s !== el) s.value = el.value; });
 }
 
 // 过滤 ansR/ansR2（保留 ansR 前12行：标题/历史/空行）；返回过滤后有效行数。开而未选值→不过滤只显列。
@@ -1207,11 +1251,10 @@ function applyAppearFilter(ansR, ansR2, isBlue) {
 }
 
 function updateAppearStatus() {
-  const el = document.getElementById('appearStatus');
-  if (!el) return;
-  el.textContent = countDrawsUsed > 0
+  const txt = countDrawsUsed > 0
     ? '正在统计最近 ' + countDrawsUsed + ' 期整组出现次数'
     : '未加载数据';
+  document.querySelectorAll('.appearStatus').forEach(el => { el.textContent = txt; });
 }
 
 // 格式化当前时间为 2026-07-31 14:30:05
@@ -1747,26 +1790,25 @@ function initUI() {
   initAppearPanel();
 }
 
-// 出现次数筛选下拉：选项 0~200（不限为默认空值）
+// 出现次数筛选下拉：选项 0~20（不限为默认空值），三个标签页副本统一填充
 function initAppearFilter() {
-  const sel = document.getElementById('appearFilter');
-  if (!sel) return;
-  for (let i = 0; i <= 200; i++) {
-    const o = document.createElement('option');
-    o.value = i;
-    o.textContent = i;
-    sel.appendChild(o);
-  }
+  document.querySelectorAll('.appearFilter').forEach(sel => {
+    for (let i = 0; i <= 20; i++) {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = i;
+      sel.appendChild(o);
+    }
+    sel.disabled = true;   // 初始开关关闭，下拉禁用
+  });
 }
 
-// 开关与筛选下拉联动：关闭时禁用下拉
+// 开关与下拉状态：初始为关闭状态（onAppearToggle/onAppearFilter 负责后续联动）
 function initAppearPanel() {
-  const tog = document.getElementById('appearToggle');
-  const sel = document.getElementById('appearFilter');
-  if (tog && sel) {
-    sel.disabled = !tog.checked;
-    tog.addEventListener('change', () => { sel.disabled = !tog.checked; });
-  }
+  appearEnabled = false;
+  appearFilterVal = '';
+  document.querySelectorAll('.appearToggle').forEach(t => { t.checked = false; });
+  document.querySelectorAll('.appearFilter').forEach(s => { s.disabled = true; });
 }
 
 // ====================== Prediction: Tab 5 ======================
