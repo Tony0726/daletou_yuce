@@ -1,0 +1,29 @@
+name: Deploy to Cloudflare Pages
+
+# 推送到 main 时自动部署到 Cloudflare Pages（保持 GitHub 与 Cloudflare 同步）
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 只部署站点文件 index.html（避免把 README/.github 也发布到 Pages）
+      - name: Prepare static files
+        run: |
+          mkdir -p public
+          cp index.html public/
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 3fb56d153bfcebaf143beb15a8a204dd
+          command: pages deploy public --project-name=daletou-yuce --commit-dirty=true
