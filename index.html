@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大乐透预测工具</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
+.header { background: linear-gradient(135deg, #e53935, #d32f2f); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 22px; }
+.header .sub { font-size: 13px; opacity: 0.85; }
+.container { max-width: 100%; padding: 12px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; background: #fff; border-radius: 8px; padding: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.tab-btn { flex:1; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:15px; font-weight:600; background:transparent; color:#666; transition:all .2s; }
+.tab-btn:hover { background: #fce4e4; color: #d32f2f; }
+.tab-btn.active { background: #d32f2f; color: #fff; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.panel { background:#fff; border-radius:8px; padding:16px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+.panel h2 { font-size:16px; color:#d32f2f; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #ffcdd2; display:flex; align-items:center; gap:8px; }
+.panel h3 { font-size:14px; color:#555; margin:10px 0 8px; }
+.section { margin-bottom:14px; }
+.section-title { font-size:13px; font-weight:600; color:#888; margin-bottom:6px; cursor:pointer; user-select:none; display:flex; align-items:center; gap:4px; }
+.section-title:hover { color:#d32f2f; }
+.section-title::before { content:'▼'; font-size:10px; }
+.section-title.collapsed::before { content:'▶'; }
+.section-body { transition: all .2s; }
+.section-body.collapsed { display:none; }
+/* ① ② ③ 面板级显示/隐藏模块 */
+.panel h2.collapse-head { cursor:pointer; user-select:none; justify-content:space-between; }
+.panel h2.collapse-head::after { content:'▾ 显示'; font-size:12px; color:#999; font-weight:normal; }
+.panel h2.collapse-head.collapsed::after { content:'▸ 隐藏'; }
+.panel-body { padding-top:4px; }
+.panel-body.collapsed { display:none; }
+/* 位置：标签与下拉框同行 */
+.pos-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.pos-row .pos-title { margin:0; min-width:74px; white-space:nowrap; }
+.pos-row .mselect { flex:1; width:auto; }
+/* 高级过滤：交集标签与下拉框同行，每行一个 */
+.adv-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.adv-row > label { flex-shrink:0; white-space:nowrap; font-size:12px; color:#666; min-width:48px; }
+.adv-row .mselect { flex:1; width:auto; min-width:0; }
+/* 返回顶部 */
+.back-top { text-align:center; padding:16px 0 24px; }
+/* 预测中加载遮罩 */
+#loadingOverlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:999999; display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+#loadingOverlay.show { display:flex; }
+.loading-spinner { width:56px; height:56px; border:5px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; }
+.loading-text { color:#fff; font-size:16px; font-weight:600; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.filter-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:center; }
+.filter-row label { font-size:13px; color:#666; min-width:60px; }
+.number-grid { display:flex; flex-wrap:wrap; gap:4px; }
+.number-grid label { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:1px solid #ddd; cursor:pointer; font-size:13px; transition:all .15s; background:#fafafa; min-width:unset; }
+.number-grid label:hover { border-color:#d32f2f; background:#ffebee; }
+.number-grid input[type="checkbox"] { display:none; }
+.number-grid input[type="checkbox"]:checked + span { color:#fff; }
+.number-grid label:has(input:checked) { background:#d32f2f; border-color:#d32f2f; color:#fff; }
+.number-grid span { pointer-events:none; }
+select { padding:5px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#fff; min-width:80px; }
+select:focus { outline:none; border-color:#d32f2f; }
+input[type="text"] { padding:5px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; width:120px; }
+input[type="text"]:focus { outline:none; border-color:#d32f2f; }
+.radio-group { display:flex; gap:8px; align-items:center; }
+.radio-group label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:13px; }
+.btn { padding:8px 20px; border:none; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; transition:all .2s; }
+.btn-primary { background:#d32f2f; color:#fff; }
+.btn-primary:hover { background:#b71c1c; }
+.btn-success { background:#43a047; color:#fff; }
+.btn-success:hover { background:#2e7d32; }
+.btn-warning { background:#f57c00; color:#fff; }
+.btn-warning:hover { background:#e65100; }
+.btn-info { background:#1976d2; color:#fff; }
+.btn-info:hover { background:#0d47a1; }
+.btn-default { background:#e0e0e0; color:#333; }
+.btn-default:hover { background:#bdbdbd; }
+.btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+/* 纵向按钮组：每个按钮占一行，全宽 */
+.btn-group-vertical { display:flex; flex-direction:column; gap:8px; }
+.btn-group-vertical .btn { width:100%; }
+.result-table { width:100%; border-collapse:collapse; margin-top:8px; }
+.result-table th { background:#d32f2f; color:#fff; padding:8px; font-size:13px; }
+.result-table td { padding:6px 8px; border:1px solid #e0e0e0; text-align:center; font-size:13px; }
+.result-table tr:nth-child(even) { background:#fafafa; }
+.result-table tr:hover { background:#ffebee; }
+.result-count { font-size:15px; font-weight:600; color:#d32f2f; margin:8px 0; }
+.history-table td { padding:4px 8px; }
+.history-table .red-ball { display:inline-block; width:28px; height:28px; line-height:28px; border-radius:50%; background:#d32f2f; color:#fff; text-align:center; margin:1px; font-size:12px; font-weight:600; }
+.history-table .blue-ball { background:#1565c0; }
+.scroll-x { overflow-x:auto; }
+.status-msg { padding:8px 12px; border-radius:4px; margin:8px 0; font-size:13px; }
+.status-info { background:#e3f2fd; color:#1565c0; }
+.status-error { background:#ffebee; color:#c62828; }
+.status-success { background:#e8f5e9; color:#2e7d32; }
+.pos-title { font-weight:600; color:#555; margin:6px 0 4px; font-size:13px; }
+.col-filter { display:flex; flex-direction:column; gap:8px; }
+/* 自定义多选下拉组件：文本框 + 弹出面板 + 复选框 */
+.mselect { position:relative; width:100%; min-width:80px; }
+.mselect-box { border:1px solid #ddd; border-radius:4px; padding:6px 28px 6px 10px; font-size:13px; background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%23999"/></svg>') no-repeat right 10px center; cursor:pointer; min-height:18px; display:flex; align-items:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; color:#999; }
+.mselect-box.has-value { color:#d32f2f; border-color:#d32f2f; background-color:#fff5f5; }
+.mselect-panel { display:none; position:fixed; z-index:9999; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,.18); max-height:260px; overflow-y:auto; padding:6px; }
+.mselect-panel.open { display:block; }
+.mselect-toolbar { display:flex; gap:14px; padding:4px 8px; border-bottom:1px solid #eee; margin-bottom:4px; position:sticky; top:0; background:#fff; z-index:1; }
+.mselect-tool { cursor:pointer; font-size:13px; color:#d32f2f; font-weight:600; }
+.mselect-tool:hover { text-decoration:underline; }
+.mselect-panel label { display:flex; align-items:center; gap:8px; padding:7px 10px; cursor:pointer; font-size:14px; border-radius:4px; }
+.mselect-panel label:hover { background:#f5f5f5; }
+.mselect-panel label:active { background:#ffebee; }
+.mselect-panel input[type="checkbox"] { width:18px; height:18px; accent-color:#d32f2f; flex-shrink:0; }
+.radio-group { flex-wrap:wrap; }
+/* 结果表格：常规/连号各自内部可滚动 */
+.result-table-wrap { max-height:420px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+@media (max-width: 768px) {
+  /* 头部保持一行：隐藏副标题，缩小标题 */
+  .header { padding:8px 12px; flex-direction:row; align-items:center; gap:6px; }
+  .header h1 { font-size:15px; white-space:nowrap; }
+  .header .sub { display:none; }
+  .header > div:last-child { gap:8px; white-space:nowrap; }
+  #dataStatus { font-size:11px; }
+  .container { padding:6px; }
+  .panel { padding:10px; margin-bottom:8px; }
+  .panel h2 { font-size:14px; margin-bottom:8px; padding-bottom:6px; }
+  .tab-btn { padding:8px 4px; font-size:13px; }
+  .filter-row { flex-direction:column; align-items:stretch; gap:6px; margin-bottom:6px; }
+  .filter-row label { min-width:unset; }
+  select { min-width:unset; width:100%; }
+  .filter-row select { width:100%; }
+  .btn { padding:10px 16px; font-size:15px; flex:1; }
+  .btn-group { flex-direction:column; }
+  .combo-row { grid-template-columns:1fr 1fr; max-height:220px; }
+  .result-table th, .result-table td { padding:3px; font-size:12px; }
+  .result-table-wrap { max-height:300px; }
+  .section-body.scroll-x { -webkit-overflow-scrolling:touch; }
+}
+/* 紧凑布局 */
+.panel { padding:10px 12px; margin-bottom:8px; }
+.section { margin-bottom:8px; }
+.section-title { margin-bottom:4px; }
+.filter-row { gap:6px; margin-bottom:6px; }
+.filter-row label { font-size:12px; min-width:52px; }
+.pos-title { margin:4px 0 3px; font-size:12px; }
+.mselect-box { padding:4px 26px 4px 8px; font-size:12px; min-height:16px; }
+.mselect-panel label { padding:5px 8px; font-size:13px; gap:6px; }
+.mselect-panel input[type="checkbox"] { width:16px; height:16px; }
+.result-table th { padding:6px; font-size:12px; }
+.result-table td { padding:4px 6px; font-size:12px; }
+.result-count { font-size:14px; margin:6px 0; }
+/* Scrollable multi-select grid */
+.combo-row { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:4px; max-height:150px; overflow-y:auto; padding:4px; border:1px solid #eee; border-radius:4px; }
+.combo-row .mselect { width:100%; min-width:unset; }
+.lbl-tip { font-size:11px; color:#999; margin-left:4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🏆 大乐透预测工具</h1>
+    <div class="sub">基于历史数据分析 · 多维度条件筛选</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div id="dataStatus" style="color:#ffcdd2;font-size:13px;">⏳ 请获取数据</div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 标题 + 获取按钮 + 日志 + 历史表格：标题左、按钮右、日志下一行、表格在下 -->
+  <div class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <h2 style="margin:0;">📊 最近10期开奖号码</h2>
+      <button class="btn btn-primary" onclick="fetchAndProcess()" style="flex-shrink:0;">📥 获取最新数据</button>
+    </div>
+    <!-- 日志（下一行） -->
+    <div style="margin-top:6px;color:#888;font-size:13px;" id="dataInfo">未加载数据</div>
+    <!-- 历史表格 -->
+    <div id="historyPanel" style="display:none;">
+      <div class="scroll-x">
+        <table class="result-table history-table">
+          <thead><tr><th>开奖日期</th><th>号码</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 过滤预设管理（放在前五红球上方） -->
+  <div class="panel">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="white-space:nowrap;font-size:13px;color:#666;">🎚️ 过滤预设：</span>
+      <select id="presetSelect" onchange="applyPreset()" style="min-width:140px;"><option value="">-- 选择预设 --</option></select>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+      <button class="btn btn-success" onclick="savePreset()">💾 保存当前</button>
+      <button class="btn btn-warning" onclick="deletePreset()">🗑️ 删除预设</button>
+      <span style="font-size:12px;color:#999;" id="presetCount"></span>
+    </div>
+  </div>
+
+  <!-- 标签页 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab5',this)">🎯 前五红球</button>
+    <button class="tab-btn" onclick="switchTab('tab6',this)">🎯 前六红球</button>
+    <button class="tab-btn" onclick="switchTab('tabB',this)">🔵 后区蓝球</button>
+  </div>
+
+  <!-- ============ TAB 1: 五位红球 ============ -->
+  <div id="tab5" class="tab-content active">
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">① 位置号码过滤</h2>
+      <div class="panel-body collapsed">
+        <div id="posFilter5"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">② 二位和/差过滤</h2>
+      <div class="panel-body collapsed">
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">和值(S_AB ~ S_DE)</div>
+          <div class="section-body collapsed" id="sumFilter5"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">差值(D_BA ~ D_ED)</div>
+          <div class="section-body collapsed" id="diffFilter5"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">③ 高级过滤</h2>
+      <div class="panel-body collapsed">
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">位置交集 + 质合/奇偶</div>
+          <div class="section-body collapsed" id="posAdvFilter5"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">综合值过滤</div>
+          <div class="section-body collapsed" id="compFilter5"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">比值过滤 (质合比·奇偶比·大小比·大中小比·路比)</div>
+          <div class="section-body collapsed" id="ratioFilter5"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">复隔中 · 冷热温 · 孤邻串</div>
+          <div class="section-body collapsed" id="clzFilter5"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">奇数/偶数/质数/合数和值</div>
+          <div class="section-body collapsed" id="sumTypeFilter5"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">尾数组合 · AC值 · 平均值 · 尾数和</div>
+          <div class="section-body collapsed" id="tailFilter5"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="btn-group-vertical">
+        <button class="btn btn-primary" onclick="runWithLoading(predict5)">🔍 开始预测</button>
+        <button class="btn btn-warning" onclick="clearTab5()">🗑️ 清空过滤</button>
+        <button class="btn btn-info" onclick="exportResults()">⬇️ 导出结果</button>
+      </div>
+      <div id="result5" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: 六位红球 ============ -->
+  <div id="tab6" class="tab-content">
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">① 位置号码过滤</h2>
+      <div class="panel-body collapsed">
+        <div id="posFilter6"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">② 二位和/差过滤</h2>
+      <div class="panel-body collapsed">
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">和值(S_AB ~ S_EF)</div>
+          <div class="section-body collapsed" id="sumFilter6"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">差值(D_BA ~ D_FE)</div>
+          <div class="section-body collapsed" id="diffFilter6"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">③ 高级过滤</h2>
+      <div class="panel-body collapsed">
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">位置交集 + 质合/奇偶</div>
+          <div class="section-body collapsed" id="posAdvFilter6"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">综合值过滤</div>
+          <div class="section-body collapsed" id="compFilter6"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">比值过滤</div>
+          <div class="section-body collapsed" id="ratioFilter6"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">复隔中 · 冷热温 · 孤邻串</div>
+          <div class="section-body collapsed" id="clzFilter6"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">奇数/偶数/质数/合数和值</div>
+          <div class="section-body collapsed" id="sumTypeFilter6"></div>
+        </div>
+        <div class="section">
+          <div class="section-title collapsed" onclick="toggleSection(this)">尾数组合 · AC值 · 平均值 · 尾数和 · 尾数个数</div>
+          <div class="section-body collapsed" id="tailFilter6"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="btn-group-vertical">
+        <button class="btn btn-primary" onclick="runWithLoading(predict6)">🔍 开始预测</button>
+        <button class="btn btn-warning" onclick="clearTab6()">🗑️ 清空过滤</button>
+        <button class="btn btn-info" onclick="exportResults()">⬇️ 导出结果</button>
+      </div>
+      <div id="result6" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: 蓝球 ============ -->
+  <div id="tabB" class="tab-content">
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">① 位置号码过滤</h2>
+      <div class="panel-body collapsed">
+        <div id="posFilterB"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">② 综合过滤</h2>
+      <div class="panel-body collapsed">
+        <div class="filter-row">
+          <label>二位和值:</label>
+          <select id="tb3_sum"><option value="">不限</option></select>
+          <label style="margin-left:16px;">二位差值:</label>
+          <select id="tb3_diff"><option value="">不限</option></select>
+          <label style="margin-left:16px;">和值/差值:</label>
+          <select id="tb3_sum_diff"><option value="">不限</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="collapse-head collapsed" onclick="togglePanel(this)">③ 比值过滤</h2>
+      <div class="panel-body collapsed">
+        <div class="filter-row">
+          <label>质合比:</label><select id="tb3_zhihebi"><option value="">不限</option></select>
+          <label>奇偶比:</label><select id="tb3_jioubi"><option value="">不限</option></select>
+          <label>大小比:</label><select id="tb3_daxiaobi"><option value="">不限</option></select>
+          <label>大中小比:</label><select id="tb3_dazhongxiaobi"><option value="">不限</option></select>
+          <label>路比:</label><select id="tb3_lubi"><option value="">不限</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="btn-group-vertical">
+        <button class="btn btn-primary" onclick="runWithLoading(predictB)">🔍 开始预测</button>
+        <button class="btn btn-warning" onclick="clearTabB()">🗑️ 清空过滤</button>
+        <button class="btn btn-info" onclick="exportResults()">⬇️ 导出结果</button>
+      </div>
+      <div id="resultB" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 返回顶部 -->
+<div class="back-top">
+  <button class="btn btn-primary" onclick="scrollToTop()">⬆ 返回顶部</button>
+</div>
+
+<!-- 预测中加载遮罩 -->
+<div id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">⏳ 预测中，请稍候...</div>
+</div>
+
+<!-- 导出组件(SheetJS)：页面加载时自动加载，点击导出无需弹框 -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+// ====================== 全局数据 ======================
+let daletouData = [];       // 原始JSON数据
+let recentRed = [];         // 最近N期红球
+let recentBlue = [];        // 最近N期蓝球
+let periodNumbers = [];     // 期号
+let numberFrequency = {};   // 号码频率
+let lastDraw = [];          // 上期号码
+let QISHU = 10;
+// 完整预测结果（用于导出Excel，不受显示行数限制）
+let resultData = { t5: null, t6: null, tb: null };
+
+// ====================== 工具函数 ======================
+function isPrime(n) {
+  if (n <= 1) return false;
+  if (n <= 3) return true;
+  if (n % 2 === 0 || n % 3 === 0) return false;
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false;
+  }
+  return true;
+}
+
+function getFactors(num) {
+  const factors = [];
+  for (let i = 1; i <= num; i++) {
+    if (num % i === 0) factors.push(i);
+  }
+  return factors;
+}
+
+function isComposite(n) {
+  if (n <= 1) return false;
+  return !isPrime(n);
+}
+
+function parseCSV(str) {
+  if (!str || !str.trim()) return [];
+  // handles semicolon-separated values like "1;2;3"
+  return str.split(';').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+}
+
+function parseNumSet(str) {
+  if (!str || !str.trim()) return null;
+  const parts = str.split(',');
+  const s = new Set();
+  for (const p of parts) {
+    const n = parseInt(p.trim());
+    if (!isNaN(n)) s.add(n);
+  }
+  return s.size ? s : null;
+}
+
+function getCheckboxValues(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  const cbs = container.querySelectorAll('input[type="checkbox"]:checked');
+  return Array.from(cbs).map(cb => parseInt(cb.value)).filter(n => !isNaN(n));
+}
+
+function getRadioValue(name) {
+  const radios = document.getElementsByName(name);
+  for (const r of radios) {
+    if (r.checked) return r.value;
+  }
+  return null;
+}
+
+function getSelectedText(id) {
+  const el = document.getElementById(id);
+  if (!el || !el.value) return '';
+  return el.value;
+}
+
+// ---- 多选下拉框辅助函数 ----
+// 获取多选框选中的所有值（原始字符串数组）
+function getMultiValues(id) {
+  const el = document.getElementById(id);
+  if (!el) return [];
+  return Array.from(el.selectedOptions).map(o => o.value);
+}
+// 获取多选框选中的所有数字（过滤非数字）
+function getMultiNums(id) {
+  return getMultiValues(id).map(v => parseInt(v)).filter(n => !isNaN(n));
+}
+// 获取多选框选中的所有条件数组（"a;b;c" → [a,b,c]）
+function getMultiConds(id) {
+  return getMultiValues(id).map(v => parseSemicolonValue(v)).filter(c => c !== null);
+}
+// 创建多选下拉框（文本框 + 弹出面板 + 复选框，可分开勾选）
+// 底层保留隐藏的 <select multiple>，读取逻辑(getMultiValues等)无需改动
+function createMultiSelect(id, options) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  sel.multiple = true;
+  sel.innerHTML = '';
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt;
+    o.textContent = opt;
+    sel.appendChild(o);
+  }
+
+  // 构建自定义UI
+  const wrapper = document.createElement('div');
+  wrapper.className = 'mselect';
+  wrapper.dataset.selectId = id;
+
+  const box = document.createElement('div');
+  box.className = 'mselect-box';
+  box.textContent = '不限';
+  box.addEventListener('click', (e) => { e.stopPropagation(); toggleMSelect(wrapper); });
+
+  const panel = document.createElement('div');
+  panel.className = 'mselect-panel';
+
+  // 顶部工具栏：全选 / 清除
+  const toolbar = document.createElement('div');
+  toolbar.className = 'mselect-toolbar';
+  const toolAll = document.createElement('span');
+  toolAll.className = 'mselect-tool';
+  toolAll.textContent = '☑ 全选';
+  toolAll.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+    syncMSelect(wrapper);
+    resetPresetSelect();
+  });
+  const toolClear = document.createElement('span');
+  toolClear.className = 'mselect-tool';
+  toolClear.textContent = '☐ 清除';
+  toolClear.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    syncMSelect(wrapper);
+    resetPresetSelect();
+  });
+  toolbar.appendChild(toolAll);
+  toolbar.appendChild(toolClear);
+  panel.appendChild(toolbar);
+
+  for (const opt of options) {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = opt;
+    cb.addEventListener('change', () => syncMSelect(wrapper));
+    const span = document.createElement('span');
+    span.textContent = opt;
+    label.appendChild(cb);
+    label.appendChild(span);
+    panel.appendChild(label);
+  }
+
+  wrapper.appendChild(box);
+  wrapper.appendChild(panel);
+  sel.style.display = 'none';
+  sel.insertAdjacentElement('afterend', wrapper);
+}
+
+// 重置预设下拉框为"选择预设"（过滤条件被修改时调用）
+function resetPresetSelect() {
+  const sel = document.getElementById('presetSelect');
+  if (sel) sel.value = '';
+}
+
+// 复选框状态 → 同步到隐藏select + 更新文本框显示
+function syncMSelect(wrapper) {
+  const sel = document.getElementById(wrapper.dataset.selectId);
+  if (!sel) return;
+  const cbs = wrapper.querySelectorAll('input[type="checkbox"]');
+  const opts = Array.from(sel.options);
+  const selected = [];
+  cbs.forEach(cb => {
+    const opt = opts.find(o => o.value === cb.value);
+    if (opt) opt.selected = cb.checked;
+    if (cb.checked) selected.push(cb.value);
+  });
+  const box = wrapper.querySelector('.mselect-box');
+  if (selected.length === 0) {
+    box.textContent = '不限';
+    box.classList.remove('has-value');
+  } else {
+    box.textContent = selected.length <= 3
+      ? selected.join(', ')
+      : selected.slice(0, 3).join(', ') + ' 等' + selected.length + '项';
+    box.classList.add('has-value');
+  }
+}
+
+// 弹出/收起面板（fixed定位，避免被滚动容器裁剪）
+function toggleMSelect(wrapper) {
+  const panel = wrapper.querySelector('.mselect-panel');
+  const wasOpen = panel.classList.contains('open');
+  document.querySelectorAll('.mselect-panel.open').forEach(p => p.classList.remove('open'));
+  if (wasOpen) return;
+  const rect = wrapper.querySelector('.mselect-box').getBoundingClientRect();
+  panel.style.top = (rect.bottom + 4) + 'px';
+  panel.style.left = rect.left + 'px';
+  panel.style.width = Math.max(rect.width, 150) + 'px';
+  panel.classList.add('open');
+}
+
+// 重置某个多选框
+function resetMSelect(wrapper) {
+  const sel = document.getElementById(wrapper.dataset.selectId);
+  if (sel) sel.selectedIndex = -1;
+  wrapper.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+  const box = wrapper.querySelector('.mselect-box');
+  if (box) { box.textContent = '不限'; box.classList.remove('has-value'); }
+}
+
+// 全局点击空白处 / 页面滚动 / 缩放时收起面板
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.mselect')) {
+    document.querySelectorAll('.mselect-panel.open').forEach(p => p.classList.remove('open'));
+  }
+});
+window.addEventListener('scroll', (e) => {
+  // 若滚动发生在已打开的面板内部（如面板自身内容滚动），不关闭面板
+  const t = e.target;
+  if (t && t.closest && t.closest('.mselect-panel.open')) return;
+  document.querySelectorAll('.mselect-panel.open').forEach(p => p.classList.remove('open'));
+}, true);
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.mselect-panel.open').forEach(p => p.classList.remove('open'));
+});
+
+// 判断结果是否匹配任一条件数组（conds: 数组的数组）
+function condsMatch(conds, re) {
+  if (!conds || conds.length === 0) return true;
+  return conds.some(c => c.length === re.length && c.every((v, i) => v === re[i]));
+}
+// 判断值是否命中数组（数组空 = 不限）
+function valIn(arr, v) {
+  if (!arr || arr.length === 0) return true;
+  return arr.includes(v);
+}
+
+function parseSemicolonValue(str) {
+  // "1;0" -> [1, 0], "1;0;1" -> [1, 0, 1], empty -> null
+  if (!str || !str.trim()) return null;
+  return str.split(';').map(s => parseInt(s.trim()));
+}
+
+// Convert semicolon string to array condition for 2D list compare
+function getSemicolonCondition(id) {
+  const v = getSelectedText(id);
+  return v ? parseSemicolonValue(v) : null;
+}
+
+// Convert comma-separated IDs to array
+function getNumberArray(id) {
+  const v = getSelectedText(id);
+  if (!v) return null;
+  const parts = v.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  return parts.length ? parts : null;
+}
+
+function createNumberCheckboxes(containerId, start, end, prefix) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'number-grid';
+  for (let i = start; i <= end; i++) {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = i;
+    cb.id = prefix + '_' + i;
+    const span = document.createElement('span');
+    span.textContent = i;
+    label.appendChild(cb);
+    label.appendChild(span);
+    grid.appendChild(label);
+  }
+  container.appendChild(grid);
+}
+
+function generateRatioOptions2d(n) {
+  const opts = [];
+  for (let i = 0; i <= n; i++) {
+    opts.push(i + ';' + (n - i));
+  }
+  return opts;
+}
+
+function generateRatioOptions3d(n) {
+  const opts = [];
+  for (let i = 0; i <= n; i++) {
+    for (let j = 0; j <= n - i; j++) {
+      const k = n - i - j;
+      opts.push(i + ';' + j + ';' + k);
+    }
+  }
+  return opts;
+}
+
+function generateNumberOptions(start, end) {
+  const opts = [];
+  for (let i = start; i <= end; i++) opts.push(String(i));
+  return opts;
+}
+
+function generateEndingTuples(n) {
+  // Generate all possible unique ending tuples for n numbers (1-36)
+  // This is the same logic as the Python code
+  const s = new Set();
+  const maxVal = n <= 5 ? 36 : 37;
+  // We'll use a recursive approach
+  function gen(remaining, start, endings) {
+    if (remaining === 0) {
+      const key = [...endings].sort().join(',');
+      s.add(key);
+      return;
+    }
+    for (let i = start; i < maxVal; i++) {
+      endings.add(i % 10);
+      gen(remaining - 1, i + 1, endings);
+      endings.delete(i % 10);
+    }
+  }
+  gen(n, 1, new Set());
+  return Array.from(s).sort((a, b) => {
+    const la = a.split(',').length, lb = b.split(',').length;
+    if (la !== lb) return la - lb;
+    return a.localeCompare(b);
+  }).map(t => '(' + t.split(',').join(' ') + ')');
+}
+
+// ====================== Judge Functions (Python → JS) ======================
+function judgeInter(setOrigin, setNow) {
+  if (!setOrigin || setOrigin.size === 0) return setNow || new Set([-1]);
+  if (!setNow || setNow.size === 0) return setOrigin;
+  const inter = new Set([...setOrigin].filter(x => setNow.has(x)));
+  return inter.size ? inter : new Set([-1]);
+}
+
+function judgeWxwd(setNumber, setWxwd) {
+  if (!setNumber || setNumber.size === 0) return setWxwd || new Set();
+  if (!setWxwd || setWxwd.size === 0) return setNumber;
+  const s = new Set([...setNumber].filter(x => setWxwd.has(x)));
+  return s;
+}
+
+function checkEndings(numberSet, endings) {
+  if (!endings || endings.size === 0) return numberSet;
+  const s = new Set();
+  for (const num of numberSet) {
+    if (endings.has(num % 10)) s.add(num);
+  }
+  return s.size ? s : new Set([-1]);
+}
+
+function judgeLubi(lst, conds) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0, 0];
+  for (const n of lst) re[n % 3]++;
+  return condsMatch(conds, re);
+}
+
+function judgeDazhongxiao(lst, conds, isBlue) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0, 0];
+  if (isBlue) {
+    for (const n of lst) {
+      if (n <= 4) re[2]++;
+      else if (n < 9) re[1]++;
+      else re[0]++;
+    }
+  } else {
+    // for 6 red
+    for (const n of lst) {
+      if (n >= 23) re[0]++;
+      else if (n >= 12) re[1]++;
+      else re[2]++;
+    }
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeDaxiao(lst, conds, isBlue) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0];
+  const threshold = isBlue ? 6 : 17;
+  for (const n of lst) {
+    if (n > threshold) re[0]++;
+    else re[1]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeFugezhong(lst, conds) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0, 0];
+  for (const n of lst) {
+    if (lastDraw && lastDraw.includes(n)) re[0]++;
+    else if (recentRed.length >= 2 && recentRed[1] && recentRed[1].includes(n)) re[1]++;
+    else re[2]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeLerewen(lst, conds) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0, 0];
+  for (const n of lst) {
+    const freq = numberFrequency[n] || 0;
+    if (freq <= 1) re[0]++;
+    else if (freq >= 3) re[1]++;
+    else re[2]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeGulinchuan(lst, conds) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0, 0];
+  const next = new Set();
+  if (lastDraw) {
+    for (const n of lastDraw) { next.add(n + 1); next.add(n - 1); }
+  }
+  for (const n of lst) {
+    if (lastDraw && lastDraw.includes(n)) re[2]++;
+    else if (next.has(n)) re[1]++;
+    else re[0]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeJishuzi(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (n % 2 === 1) s += n; }
+  let re;
+  if (s <= 11) re = '小';
+  else if (s < 81) re = '中';
+  else re = '大';
+  return values.includes(re);
+}
+
+function judgeJishuzi2(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (n % 2 === 1) s += n; }
+  return values.includes(s);
+}
+
+function judgeOushuzi(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (n % 2 === 0) s += n; }
+  let re;
+  if (s <= 10) re = '小';
+  else if (s < 92) re = '中';
+  else re = '大';
+  return values.includes(re);
+}
+
+function judgeOushuzi2(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (n % 2 === 0) s += n; }
+  return values.includes(s);
+}
+
+function judgeZhishuhe(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (isPrime(n)) s += n; }
+  let re;
+  if (s <= 11) re = '小';
+  else if (s < 57) re = '中';
+  else re = '大';
+  return values.includes(re);
+}
+
+function judgeZhishuhe2(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (isPrime(n)) s += n; }
+  return values.includes(s);
+}
+
+function judgeHeshuhe(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (!isPrime(n)) s += n; }
+  let re;
+  if (s <= 35) re = '小';
+  else if (s < 116) re = '中';
+  else re = '大';
+  return values.includes(re);
+}
+
+function judgeHeshuhe2(lst, values) {
+  if (!values || values.length === 0) return true;
+  let s = 0;
+  for (const n of lst) { if (!isPrime(n)) s += n; }
+  return values.includes(s);
+}
+
+function judgeDaxiaobi(lst, conds, threshold) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0];
+  for (const n of lst) {
+    if (n >= threshold) re[0]++;
+    else re[1]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeDazhongxiaobi(lst, conds, t1, t2) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0, 0];
+  for (const n of lst) {
+    if (n >= t1) re[0]++;
+    else if (n >= t2) re[1]++;
+    else re[2]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeZhihebi(lst, conds) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0];
+  for (const n of lst) {
+    if (isPrime(n)) re[0]++; else re[1]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeJoubi(lst, conds) {
+  if (!conds || conds.length === 0) return true;
+  const re = [0, 0];
+  for (const n of lst) {
+    if (n % 2 === 1) re[0]++; else re[1]++;
+  }
+  return condsMatch(conds, re);
+}
+
+function judgeAcValue(lst, values) {
+  if (!values || values.length === 0) return true;
+  const s = new Set();
+  const n = lst.length;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      s.add(lst[j] - lst[i]);
+    }
+  }
+  return values.includes(s.size - n + 1);
+}
+
+function judgeZhihe(lst, zhihe) {
+  if (!zhihe || !lst || lst.size === 0) return lst;
+  const s = new Set();
+  for (const n of lst) {
+    if (zhihe === '质数' && isPrime(n)) s.add(n);
+    if (zhihe === '合数' && !isPrime(n)) s.add(n);
+  }
+  return s.size ? s : new Set([-1]);
+}
+
+function judgeJiou(lst, jiou) {
+  if (!jiou || !lst || lst.size === 0) return lst;
+  const s = new Set();
+  for (const n of lst) {
+    if (jiou === '奇' && n % 2 === 1) s.add(n);
+    if (jiou === '偶' && n % 2 === 0) s.add(n);
+  }
+  return s.size ? s : new Set([-1]);
+}
+
+// ====================== Tab Switching ======================
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+  const body = el.nextElementSibling;
+  if (body) body.classList.toggle('collapsed');
+}
+
+// 面板级显示/隐藏（① ② ③ 模块）
+function togglePanel(head) {
+  head.classList.toggle('collapsed');
+  const body = head.nextElementSibling;
+  if (body) body.classList.toggle('collapsed');
+}
+
+// 结果表格展开/收起：表格较大时显示加载遮罩并阻止交互，避免展开时卡顿
+function toggleResultSection(el) {
+  const overlay = document.getElementById('loadingOverlay');
+  const textEl = overlay.querySelector('.loading-text');
+  // 先显示遮罩
+  overlay.classList.add('show');
+  textEl.textContent = '⏳ 正在展开结果表格，请稍候...';
+  setTimeout(() => {
+    el.classList.toggle('collapsed');
+    const body = el.nextElementSibling;
+    if (body) body.classList.toggle('collapsed');
+    // 等布局渲染完成后再收起遮罩
+    setTimeout(() => {
+      overlay.classList.remove('show');
+      textEl.textContent = '⏳ 预测中，请稍候...';
+    }, 120);
+  }, 60);
+}
+
+// 返回页面顶部
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 带加载遮罩运行预测：显示"预测中"并阻止页面交互，防止长计算卡顿误触
+function runWithLoading(predictFn) {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('show');
+  // 用 setTimeout 先让遮罩渲染出来，再执行同步计算
+  setTimeout(() => {
+    try {
+      predictFn();
+    } catch (e) {
+      console.error(e);
+      alert('预测出错: ' + e.message);
+    } finally {
+      overlay.classList.remove('show');
+    }
+  }, 60);
+}
+
+// ====================== Data Fetching ======================
+// 首选数据源：体彩官方接口（部署到服务器后可直接 fetch，数据最权威）
+const SPORTTERY_URL = 'https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=30&isVerify=1&pageNo=1';
+// 备用数据源：GitHub 上的自动更新仓库（每天更新，jsDelivr/GitHub raw 带 CORS，
+// 在 file:// 或体彩接口不可用时也能直接 fetch —— 已验证可用）
+const GITHUB_DLT_URLS = [
+  'https://cdn.jsdelivr.net/gh/yangxb919/lottery-data@main/data/dlt.json',
+  'https://raw.githubusercontent.com/yangxb919/lottery-data/main/data/dlt.json',
+];
+
+// 尝试请求一个URL，返回JSON对象或null
+async function tryFetch(url, timeoutMs) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs || 10000);
+  try {
+    const resp = await fetch(url, { signal: ctrl.signal });
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// 统一数据处理：传入统一格式的数组 [{issue, front:[..], back:[..]}]（倒序，最新在前）
+function processDraws(draws) {
+  // 取前QISHU期（倒序，最新一期在前）
+  const count = Math.min(QISHU, draws.length);
+  recentRed = [];
+  recentBlue = [];
+  periodNumbers = [];
+
+  for (let i = 0; i < count; i++) {
+    const draw = draws[i];
+    const front = (draw.front || []).map(Number);
+    const back = (draw.back || []).map(Number);
+    if (front.length >= 5) recentRed.push(front);
+    if (back.length >= 2) recentBlue.push(back);
+    else recentBlue.push([]);
+    periodNumbers.push(draw.date || draw.issue || '');
+  }
+
+  // 数据是倒序(最新在前)，转为正序(最早在前)便于展示
+  recentRed.reverse();
+  recentBlue.reverse();
+  periodNumbers.reverse();
+
+  // 频率统计
+  numberFrequency = {};
+  for (const row of recentRed) {
+    for (const n of row) {
+      numberFrequency[n] = (numberFrequency[n] || 0) + 1;
+    }
+  }
+
+  lastDraw = recentRed.length > 0 ? recentRed[recentRed.length - 1] : [];
+
+  // 显示历史号码
+  showHistory();
+  document.getElementById('historyPanel').style.display = '';
+}
+
+// 格式化当前时间为 2026-07-31 14:30:05
+function formatTime(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+         ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+// 操作日志：写入浏览器控制台，并返回格式化时间字符串
+function logAction(msg) {
+  const time = formatTime(new Date());
+  console.log('[日志] ' + time + ' ' + msg);
+  return time;
+}
+
+async function fetchAndProcess() {
+  const statusEl = document.getElementById('dataStatus');
+  const infoEl = document.getElementById('dataInfo');
+  const clickTime = logAction('点击获取最新数据');
+  statusEl.textContent = '⏳ 正在获取数据... (' + clickTime + ')';
+
+  // 策略1：体彩官方接口（已部署到服务器，可直连，最权威）
+  const sporttery = await tryFetch(SPORTTERY_URL, 12000);
+  if (sporttery && sporttery.value && sporttery.value.list) {
+    const draws = sporttery.value.list.map(d => {
+      const nums = (d.lotteryDrawResult || '').split(' ').filter(Boolean).map(Number);
+      return {
+        issue: d.lotteryDrawNum || '',
+        date: (d.lotteryDrawTime || '').slice(0, 10),
+        front: nums.slice(0, 5),
+        back: nums.slice(5, 7),
+      };
+    });
+    processDraws(draws);
+    const latest = sporttery.value.list[0];
+    statusEl.textContent = '✅ 数据已更新';
+    statusEl.style.color = '#a5d6a7';
+    infoEl.textContent = '已加载 ' + Math.min(QISHU, draws.length) + ' 期数据 (最新: ' + ((latest.lotteryDrawTime || '').slice(0, 10) || latest.lotteryDrawNum) + ', 来源: 体彩官方, 操作时间: ' + clickTime + ')';
+    logAction('获取成功: 最新开奖日期 ' + ((latest.lotteryDrawTime || '').slice(0, 10) || ''));
+    return true;
+  }
+
+  // 策略2：GitHub 静态数据（体彩接口不可用时回退）
+  for (const url of GITHUB_DLT_URLS) {
+    const data = await tryFetch(url, 12000);
+    if (Array.isArray(data) && data.length > 0 && data[0].front) {
+      processDraws(data);
+      const latest = data[0];
+      statusEl.textContent = '✅ 数据已更新';
+      statusEl.style.color = '#a5d6a7';
+      infoEl.textContent = '已加载 ' + Math.min(QISHU, data.length) + ' 期数据 (最新: ' + (latest.date || latest.issue) + ', 来源: GitHub镜像, 操作时间: ' + clickTime + ')';
+      logAction('获取成功: 最新开奖日期 ' + (latest.date || latest.issue));
+      return true;
+    }
+  }
+
+  // 策略3：硬编码兜底
+  statusEl.textContent = '⚠️ 已加载硬编码数据';
+  statusEl.style.color = '#ffa726';
+  infoEl.textContent = '实时数据源不可用，使用最近10期硬编码数据 (操作时间: ' + clickTime + ')';
+  logAction('获取失败: 已回退到硬编码数据');
+  useMockData();
+  return false;
+}
+
+function showHistory() {
+  const tbody = document.getElementById('historyBody');
+  tbody.innerHTML = '';
+  // 最新一期显示在最上面（recentRed 内部为正序，此处倒序展示）
+  for (let i = recentRed.length - 1; i >= 0; i--) {
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td');
+    td1.textContent = periodNumbers[i] || '';
+    const td2 = document.createElement('td');
+    for (const n of recentRed[i]) {
+      const span = document.createElement('span');
+      span.className = 'red-ball';
+      span.textContent = String(n).padStart(2, '0');
+      td2.appendChild(span);
+    }
+    if (recentBlue[i]) {
+      for (const n of recentBlue[i]) {
+        const span = document.createElement('span');
+        span.className = 'red-ball blue-ball';
+        span.textContent = String(n).padStart(2, '0');
+        td2.appendChild(span);
+      }
+    }
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tbody.appendChild(tr);
+  }
+}
+
+function useMockData() {
+  // 硬编码最新10期真实开奖数据（API因CORS/网络不可用时回退使用）
+  // 来源：webapi.sporttery.cn 超级大乐透(gameNo=85)
+  const draws = [
+    {date:"2026-07-29",result:"03 04 14 28 31 05 07"},
+    {date:"2026-07-27",result:"13 25 30 32 33 04 05"},
+    {date:"2026-07-25",result:"14 15 16 23 26 07 09"},
+    {date:"2026-07-22",result:"16 26 27 28 34 02 06"},
+    {date:"2026-07-20",result:"08 16 18 24 34 09 12"},
+    {date:"2026-07-18",result:"05 10 15 21 23 07 08"},
+    {date:"2026-07-15",result:"06 08 23 26 27 05 12"},
+    {date:"2026-07-13",result:"02 13 20 25 32 08 11"},
+    {date:"2026-07-11",result:"04 14 19 24 27 06 07"},
+    {date:"2026-07-08",result:"15 20 27 28 35 02 11"},
+  ];
+
+  recentRed = [];
+  recentBlue = [];
+  periodNumbers = [];
+
+  for (const draw of draws) {
+    const nums = draw.result.split(' ').filter(Boolean).map(Number);
+    recentRed.push(nums.slice(0, 5));
+    recentBlue.push(nums.slice(5, 7));
+    periodNumbers.push(draw.date);
+  }
+
+  numberFrequency = {};
+  for (const row of recentRed) {
+    for (const n of row) {
+      numberFrequency[n] = (numberFrequency[n] || 0) + 1;
+    }
+  }
+
+  lastDraw = recentRed.length > 0 ? recentRed[recentRed.length - 1] : [];
+  showHistory();
+  document.getElementById('historyPanel').style.display = '';
+  document.getElementById('dataInfo').textContent = '已加载 ' + QISHU + ' 期数据 (硬编码最新10期)';
+}
+
+// ====================== Init UI ======================
+function initUI() {
+  // Tab 5 position filters → 多选下拉框（标签与下拉框同行）
+  // 位置从小到大排列：第i位最小为i，最大依次为 30,31,32,33,35
+  const posNames5 = ['第一位(A)', '第二位(B)', '第三位(C)', '第四位(D)', '第五位(E)'];
+  const posIds5 = ['tab5_a', 'tab5_b', 'tab5_c', 'tab5_d', 'tab5_e'];
+  const posRanges5 = [[1,30], [2,31], [3,32], [4,33], [5,35]];
+  let html5 = '';
+  for (let i = 0; i < 5; i++) {
+    html5 += '<div class="pos-row"><span class="pos-title">' + posNames5[i] + '</span>';
+    html5 += '<select id="' + posIds5[i] + '" multiple class="pos-select"></select></div>';
+  }
+  document.getElementById('posFilter5').innerHTML = html5;
+  for (let i = 0; i < 5; i++) {
+    createMultiSelect(posIds5[i], generateNumberOptions(posRanges5[i][0], posRanges5[i][1]));
+  }
+
+  // Tab 6 position filters → 多选下拉框（标签与下拉框同行）
+  // 位置从小到大排列：第i位最小为i，最大依次为 30,31,32,33,35,35
+  const posNames6 = ['第一位(A)', '第二位(B)', '第三位(C)', '第四位(D)', '第五位(E)', '第六位(F)'];
+  const posIds6 = ['tab6_a', 'tab6_b', 'tab6_c', 'tab6_d', 'tab6_e', 'tab6_f'];
+  const posRanges6 = [[1,30], [2,31], [3,32], [4,33], [5,35], [6,35]];
+  let html6 = '';
+  for (let i = 0; i < 6; i++) {
+    html6 += '<div class="pos-row"><span class="pos-title">' + posNames6[i] + '</span>';
+    html6 += '<select id="' + posIds6[i] + '" multiple class="pos-select"></select></div>';
+  }
+  document.getElementById('posFilter6').innerHTML = html6;
+  for (let i = 0; i < 6; i++) {
+    createMultiSelect(posIds6[i], generateNumberOptions(posRanges6[i][0], posRanges6[i][1]));
+  }
+
+  // Tab B position filters → 多选下拉框（标签与下拉框同行）
+  let htmlB = '<div class="pos-row"><span class="pos-title">第一位(B1)</span>';
+  htmlB += '<select id="tabB_b1" multiple class="pos-select"></select></div>';
+  htmlB += '<div class="pos-row"><span class="pos-title">第二位(B2)</span>';
+  htmlB += '<select id="tabB_b2" multiple class="pos-select"></select></div>';
+  document.getElementById('posFilterB').innerHTML = htmlB;
+  createMultiSelect('tabB_b1', generateNumberOptions(1, 12));
+  createMultiSelect('tabB_b2', generateNumberOptions(1, 12));
+
+  // ---- Tab 5 Sum/Diff filters ----
+  const sumPairs5 = [
+    {id:'t5_s_ab', label:'S_AB (A+B)'}, {id:'t5_s_ac', label:'S_AC (A+C)'},
+    {id:'t5_s_ad', label:'S_AD (A+D)'}, {id:'t5_s_ae', label:'S_AE (A+E)'},
+    {id:'t5_s_bc', label:'S_BC (B+C)'}, {id:'t5_s_bd', label:'S_BD (B+D)'},
+    {id:'t5_s_be', label:'S_BE (B+E)'}, {id:'t5_s_cd', label:'S_CD (C+D)'},
+    {id:'t5_s_ce', label:'S_CE (C+E)'}, {id:'t5_s_de', label:'S_DE (D+E)'},
+  ];
+  const diffPairs5 = [
+    {id:'t5_d_ba', label:'D_BA (B-A)'}, {id:'t5_d_ca', label:'D_CA (C-A)'},
+    {id:'t5_d_da', label:'D_DA (D-A)'}, {id:'t5_d_ea', label:'D_EA (E-A)'},
+    {id:'t5_d_cb', label:'D_CB (C-B)'}, {id:'t5_d_db', label:'D_DB (D-B)'},
+    {id:'t5_d_eb', label:'D_EB (E-B)'}, {id:'t5_d_dc', label:'D_DC (D-C)'},
+    {id:'t5_d_ec', label:'D_EC (E-C)'}, {id:'t5_d_ed', label:'D_ED (E-D)'},
+  ];
+
+  let sumHtml5 = '<div class="combo-row">';
+  for (const p of sumPairs5) {
+    sumHtml5 += '<div><span style="font-size:12px;">' + p.label + '</span><br><select id="' + p.id + '"><option value="">不限</option></select></div>';
+  }
+  sumHtml5 += '</div>';
+  document.getElementById('sumFilter5').innerHTML = sumHtml5;
+  for (const p of sumPairs5) {
+    createMultiSelect(p.id, generateNumberOptions(3, 69), '不限');
+  }
+
+  let diffHtml5 = '<div class="combo-row">';
+  for (const p of diffPairs5) {
+    diffHtml5 += '<div><span style="font-size:12px;">' + p.label + '</span><br><select id="' + p.id + '"><option value="">不限</option></select></div>';
+  }
+  diffHtml5 += '</div>';
+  document.getElementById('diffFilter5').innerHTML = diffHtml5;
+  for (const p of diffPairs5) {
+    createMultiSelect(p.id, generateNumberOptions(1, 34), '不限');
+  }
+
+  // Tab 5 Advanced position filters
+  const posAdv5Html = `
+    <div class="adv-row"><label>A交集:</label><select id="t5_pa"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>B交集:</label><select id="t5_pb"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>C交集:</label><select id="t5_pc"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>D交集:</label><select id="t5_pd"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>E交集:</label><select id="t5_pe"><option value="">不限</option></select></div>
+    <div class="filter-row">
+      <label>A质合:</label><div class="radio-group" id="t5_zhihe_a"><label><input type="radio" name="t5_zhihe_a" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_a" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_a" value="合数"> 合数</label></div>
+      <label style="margin-left:16px;">A奇偶:</label><div class="radio-group" id="t5_jiou_a"><label><input type="radio" name="t5_jiou_a" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_a" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_a" value="偶"> 偶</label></div>
+    </div>
+    <div class="filter-row">
+      <label>B质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_b" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_b" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_b" value="合数"> 合数</label></div>
+      <label style="margin-left:16px;">B奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_b" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_b" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_b" value="偶"> 偶</label></div>
+    </div>
+    <div class="filter-row">
+      <label>C质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_c" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_c" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_c" value="合数"> 合数</label></div>
+      <label style="margin-left:16px;">C奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_c" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_c" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_c" value="偶"> 偶</label></div>
+    </div>
+    <div class="filter-row">
+      <label>D质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_d" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_d" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_d" value="合数"> 合数</label></div>
+      <label style="margin-left:16px;">D奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_d" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_d" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_d" value="偶"> 偶</label></div>
+    </div>
+    <div class="filter-row">
+      <label>E质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_e" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_e" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_e" value="合数"> 合数</label></div>
+      <label style="margin-left:16px;">E奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_e" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_e" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_e" value="偶"> 偶</label></div>
+    </div>
+    <div class="filter-row">
+      <label>S_AE交集:</label><select id="t5_sae_inter"><option value="">不限</option></select>
+      <label>S_AE质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sae" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sae" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sae" value="合数"> 合数</label></div>
+    </div>
+    <div class="filter-row">
+      <label>D_EA交集:</label><select id="t5_dea_inter"><option value="">不限</option></select>
+      <label>D_EA质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_dea" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_dea" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_dea" value="合数"> 合数</label></div>
+    </div>
+    <div class="filter-row">
+      <label>S_BD交集:</label><select id="t5_sbd_inter"><option value="">不限</option></select>
+      <label>S_BD质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sbd" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sbd" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sbd" value="合数"> 合数</label></div>
+    </div>
+    <div class="filter-row">
+      <label>D_DB交集:</label><select id="t5_ddb_inter"><option value="">不限</option></select>
+      <label>D_DB质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_ddb" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_ddb" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_ddb" value="合数"> 合数</label></div>
+    </div>
+    <div class="filter-row">
+      <label>S_ABDE交集:</label><select id="t5_sabde_inter"><option value="">不限</option></select>
+      <label>S_ABDE质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sabde" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sabde" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sabde" value="合数"> 合数</label></div>
+    </div>
+    <div class="filter-row">
+      <label>D_AEBD交集:</label><select id="t5_daebd_inter"><option value="">不限</option></select>
+      <label>D_AEBD质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_daebd" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_daebd" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_daebd" value="合数"> 合数</label></div>
+    </div>
+  `;
+  document.getElementById('posAdvFilter5').innerHTML = posAdv5Html;
+  createMultiSelect('t5_pa', generateNumberOptions(1, 30));
+  createMultiSelect('t5_pb', generateNumberOptions(2, 31));
+  createMultiSelect('t5_pc', generateNumberOptions(3, 32));
+  createMultiSelect('t5_pd', generateNumberOptions(4, 33));
+  createMultiSelect('t5_pe', generateNumberOptions(5, 35));
+  createMultiSelect('t5_sae_inter', generateNumberOptions(6, 66));
+  createMultiSelect('t5_dea_inter', generateNumberOptions(4, 35));
+  createMultiSelect('t5_sbd_inter', generateNumberOptions(6, 66));
+  createMultiSelect('t5_ddb_inter', generateNumberOptions(2, 33));
+  createMultiSelect('t5_sabde_inter', generateNumberOptions(12, 132));
+  createMultiSelect('t5_daebd_inter', generateNumberOptions(-30, 30));
+
+  // Tab 5 比值过滤（质合比/奇偶比/大小比/大中小比/路比）
+  const ratio5Html = `
+    <div class="filter-row">
+      <label>质合比:</label><select id="t5_zhihebi"><option value="">不限</option></select>
+      <label>奇偶比:</label><select id="t5_jioubi"><option value="">不限</option></select>
+      <label>大小比(≥18):</label><select id="t5_daxiaobi"><option value="">不限</option></select>
+      <label>大中小比(≥25/≥13):</label><select id="t5_dazhongxiaobi"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>路比(0/1/2):</label><select id="t5_lubi"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('ratioFilter5').innerHTML = ratio5Html;
+  createMultiSelect('t5_zhihebi', generateRatioOptions2d(5));
+  createMultiSelect('t5_jioubi', generateRatioOptions2d(5));
+  createMultiSelect('t5_daxiaobi', generateRatioOptions2d(5));
+  createMultiSelect('t5_dazhongxiaobi', generateRatioOptions3d(5));
+  createMultiSelect('t5_lubi', generateRatioOptions3d(5));
+
+  // Tab 5 综合值过滤（AC值/和值/尾数）
+  const comp5Html = `
+    <div class="filter-row">
+      <label>AC值:</label><select id="t5_ac"><option value="">不限</option></select>
+      <label>和值(S_ABCDE):</label><select id="t5_sum"><option value="">不限</option></select>
+      <label>尾数:</label><select id="t5_sum_wx"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('compFilter5').innerHTML = comp5Html;
+  createMultiSelect('t5_ac', generateNumberOptions(0, 10));
+  createMultiSelect('t5_sum', generateNumberOptions(5, 170));
+  createMultiSelect('t5_sum_wx', generateNumberOptions(0, 9));
+
+  // Tab 5 复隔中/冷热温/孤邻串
+  const clz5Html = `
+    <div class="filter-row">
+      <label>复隔中:</label><select id="t5_fugezhong"><option value="">不限</option></select>
+      <label>冷热温:</label><select id="t5_lengrewen"><option value="">不限</option></select>
+      <label>孤邻串:</label><select id="t5_gulinchuan"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('clzFilter5').innerHTML = clz5Html;
+  createMultiSelect('t5_fugezhong', generateRatioOptions3d(5), '不限');
+  createMultiSelect('t5_lengrewen', generateRatioOptions3d(5), '不限');
+  createMultiSelect('t5_gulinchuan', generateRatioOptions3d(5), '不限');
+
+  // Tab 5 奇数/偶数/质数/合数和值
+  const sumType5Html = `
+    <div class="filter-row">
+      <label>奇数和分级:</label><select id="t5_jishuzi" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>奇数和值:</label><select id="t5_jishuzi2"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>偶数和分级:</label><select id="t5_oushuzi" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>偶数和值:</label><select id="t5_oushuzi2"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>质数和分级:</label><select id="t5_zhishuhe" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>质数和值:</label><select id="t5_zhishuhe2"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>合数和分级:</label><select id="t5_heshuhe" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>合数和值:</label><select id="t5_heshuhe2"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('sumTypeFilter5').innerHTML = sumType5Html;
+  createMultiSelect('t5_jishuzi', ['小', '中', '大']);
+  createMultiSelect('t5_oushuzi', ['小', '中', '大']);
+  createMultiSelect('t5_zhishuhe', ['小', '中', '大']);
+  createMultiSelect('t5_heshuhe', ['小', '中', '大']);
+  createMultiSelect('t5_jishuzi2', generateNumberOptions(0, 155));
+  createMultiSelect('t5_oushuzi2', generateNumberOptions(0, 150));
+  createMultiSelect('t5_zhishuhe2', generateNumberOptions(0, 119));
+  createMultiSelect('t5_heshuhe2', generateNumberOptions(0, 164));
+
+  // Tab 5 尾数
+  const tail5Html = `
+    <div class="filter-row">
+      <label>尾数组合:</label><select id="t5_weishuzuhe" style="max-width:300px;"><option value="">不限</option></select>
+      <label>平均:</label><select id="t5_avg"><option value="">不限</option></select>
+      <label>尾数和:</label><select id="t5_weisum"><option value="">不限</option></select>
+      <label>尾数个数:</label><select id="t5_tailcount"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('tailFilter5').innerHTML = tail5Html;
+
+  createMultiSelect('t5_weishuzuhe', generateEndingTuples(5));
+  createMultiSelect('t5_avg', generateNumberOptions(5, 33));
+  createMultiSelect('t5_weisum', generateNumberOptions(0, 42));
+  createMultiSelect('t5_tailcount', generateNumberOptions(2, 5));
+
+  // ---- Tab 6 Sum/Diff filters ----
+  const sumPairs6 = [
+    {id:'t6_s_ab',label:'S_AB'},{id:'t6_s_ac',label:'S_AC'},{id:'t6_s_ad',label:'S_AD'},{id:'t6_s_ae',label:'S_AE'},{id:'t6_s_af',label:'S_AF'},
+    {id:'t6_s_bc',label:'S_BC'},{id:'t6_s_bd',label:'S_BD'},{id:'t6_s_be',label:'S_BE'},{id:'t6_s_bf',label:'S_BF'},
+    {id:'t6_s_cd',label:'S_CD'},{id:'t6_s_ce',label:'S_CE'},{id:'t6_s_cf',label:'S_CF'},
+    {id:'t6_s_de',label:'S_DE'},{id:'t6_s_df',label:'S_DF'},{id:'t6_s_ef',label:'S_EF'},
+  ];
+  const diffPairs6 = [
+    {id:'t6_d_ba',label:'D_BA'},{id:'t6_d_ca',label:'D_CA'},{id:'t6_d_da',label:'D_DA'},{id:'t6_d_ea',label:'D_EA'},{id:'t6_d_fa',label:'D_FA'},
+    {id:'t6_d_cb',label:'D_CB'},{id:'t6_d_db',label:'D_DB'},{id:'t6_d_eb',label:'D_EB'},{id:'t6_d_fb',label:'D_FB'},
+    {id:'t6_d_dc',label:'D_DC'},{id:'t6_d_ec',label:'D_EC'},{id:'t6_d_fc',label:'D_FC'},
+    {id:'t6_d_ed',label:'D_ED'},{id:'t6_d_fd',label:'D_FD'},{id:'t6_d_fe',label:'D_FE'},
+  ];
+
+  let sumHtml6 = '<div class="combo-row">';
+  for (const p of sumPairs6) {
+    sumHtml6 += '<div><span style="font-size:12px;">' + p.label + '</span><br><select id="' + p.id + '"><option value="">不限</option></select></div>';
+  }
+  sumHtml6 += '</div>';
+  document.getElementById('sumFilter6').innerHTML = sumHtml6;
+  for (const p of sumPairs6) {
+    createMultiSelect(p.id, generateNumberOptions(3, 69), '不限');
+  }
+
+  let diffHtml6 = '<div class="combo-row">';
+  for (const p of diffPairs6) {
+    diffHtml6 += '<div><span style="font-size:12px;">' + p.label + '</span><br><select id="' + p.id + '"><option value="">不限</option></select></div>';
+  }
+  diffHtml6 += '</div>';
+  document.getElementById('diffFilter6').innerHTML = diffHtml6;
+  for (const p of diffPairs6) {
+    if (p.id.includes('_fa') || p.id.includes('_fb') || p.id.includes('_fc') || p.id.includes('_fd') || p.id.includes('_fe')) {
+      createMultiSelect(p.id, generateNumberOptions(1, 34), '不限');
+    } else {
+      createMultiSelect(p.id, generateNumberOptions(1, 34), '不限');
+    }
+  }
+
+  // Tab 6 Advanced position filters
+  const posAdv6Html = `
+    <div class="adv-row"><label>A交集:</label><select id="t6_pa"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>B交集:</label><select id="t6_pb"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>C交集:</label><select id="t6_pc"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>D交集:</label><select id="t6_pd"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>E交集:</label><select id="t6_pe"><option value="">不限</option></select></div>
+    <div class="adv-row"><label>F交集:</label><select id="t6_pf"><option value="">不限</option></select></div>
+    <div class="filter-row"><label>A质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_a" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_a" value="质数">质</label><label><input type="radio" name="t6_zhihe_a" value="合数">合</label></div></div>
+    <div class="filter-row"><label>B质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_b" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_b" value="质数">质</label><label><input type="radio" name="t6_zhihe_b" value="合数">合</label></div></div>
+    <div class="filter-row"><label>C质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_c" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_c" value="质数">质</label><label><input type="radio" name="t6_zhihe_c" value="合数">合</label></div></div>
+    <div class="filter-row"><label>D质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_d" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_d" value="质数">质</label><label><input type="radio" name="t6_zhihe_d" value="合数">合</label></div></div>
+    <div class="filter-row"><label>E质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_e" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_e" value="质数">质</label><label><input type="radio" name="t6_zhihe_e" value="合数">合</label></div></div>
+    <div class="filter-row"><label>F质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_f" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_f" value="质数">质</label><label><input type="radio" name="t6_zhihe_f" value="合数">合</label></div></div>
+  `;
+  document.getElementById('posAdvFilter6').innerHTML = posAdv6Html;
+  createMultiSelect('t6_pa', generateNumberOptions(1, 30));
+  createMultiSelect('t6_pb', generateNumberOptions(2, 31));
+  createMultiSelect('t6_pc', generateNumberOptions(3, 32));
+  createMultiSelect('t6_pd', generateNumberOptions(4, 33));
+  createMultiSelect('t6_pe', generateNumberOptions(5, 35));
+  createMultiSelect('t6_pf', generateNumberOptions(6, 35));
+
+  // Tab 6 比值过滤（质合比/奇偶比/大小比/大中小比/路比）
+  const ratio6Html = `
+    <div class="filter-row">
+      <label>质合比:</label><select id="t6_zhihebi"><option value="">不限</option></select>
+      <label>奇偶比:</label><select id="t6_jioubi"><option value="">不限</option></select>
+      <label>大小比(≥17):</label><select id="t6_daxiaobi"><option value="">不限</option></select>
+      <label>大中小比(≥23/≥12):</label><select id="t6_dazhongxiaobi"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>路比:</label><select id="t6_lubi"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('ratioFilter6').innerHTML = ratio6Html;
+  createMultiSelect('t6_zhihebi', generateRatioOptions2d(6));
+  createMultiSelect('t6_jioubi', generateRatioOptions2d(6));
+  createMultiSelect('t6_daxiaobi', generateRatioOptions2d(6));
+  createMultiSelect('t6_dazhongxiaobi', generateRatioOptions3d(6));
+  createMultiSelect('t6_lubi', generateRatioOptions3d(6));
+
+  // Tab 6 综合值过滤（AC值/和值/尾数）
+  const comp6Html = `
+    <div class="filter-row">
+      <label>AC值:</label><select id="t6_ac"><option value="">不限</option></select>
+      <label>和值(S_ABCDEF):</label><select id="t6_sum"><option value="">不限</option></select>
+      <label>尾数:</label><select id="t6_sum_wx"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('compFilter6').innerHTML = comp6Html;
+  createMultiSelect('t6_ac', generateNumberOptions(0, 10));
+  createMultiSelect('t6_sum', generateNumberOptions(6, 210));
+  createMultiSelect('t6_sum_wx', generateNumberOptions(0, 9));
+
+  // Tab 6 复隔中/冷热温/孤邻串
+  const clz6Html = `
+    <div class="filter-row">
+      <label>复隔中:</label><select id="t6_fugezhong"><option value="">不限</option></select>
+      <label>冷热温:</label><select id="t6_lengrewen"><option value="">不限</option></select>
+      <label>孤邻串:</label><select id="t6_gulinchuan"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('clzFilter6').innerHTML = clz6Html;
+  createMultiSelect('t6_fugezhong', generateRatioOptions3d(6), '不限');
+  createMultiSelect('t6_lengrewen', generateRatioOptions3d(6), '不限');
+  createMultiSelect('t6_gulinchuan', generateRatioOptions3d(6), '不限');
+
+  // Tab 6 sum-type filters
+  const sumType6Html = `
+    <div class="filter-row">
+      <label>奇数和分级:</label><select id="t6_jishuzi" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>奇数和值:</label><select id="t6_jishuzi2"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>偶数和分级:</label><select id="t6_oushuzi" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>偶数和值:</label><select id="t6_oushuzi2"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>质数和分级:</label><select id="t6_zhishuhe" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>质数和值:</label><select id="t6_zhishuhe2"><option value="">不限</option></select>
+    </div>
+    <div class="filter-row">
+      <label>合数和分级:</label><select id="t6_heshuhe" multiple><option>小</option><option>中</option><option>大</option></select>
+      <label>合数和值:</label><select id="t6_heshuhe2"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('sumTypeFilter6').innerHTML = sumType6Html;
+  createMultiSelect('t6_jishuzi', ['小', '中', '大']);
+  createMultiSelect('t6_oushuzi', ['小', '中', '大']);
+  createMultiSelect('t6_zhishuhe', ['小', '中', '大']);
+  createMultiSelect('t6_heshuhe', ['小', '中', '大']);
+  createMultiSelect('t6_jishuzi2', generateNumberOptions(0, 155));
+  createMultiSelect('t6_oushuzi2', generateNumberOptions(0, 150));
+  createMultiSelect('t6_zhishuhe2', generateNumberOptions(0, 119));
+  createMultiSelect('t6_heshuhe2', generateNumberOptions(0, 164));
+
+  // Tab 6 tail
+  const tail6Html = `
+    <div class="filter-row">
+      <label>尾数组合:</label><select id="t6_weishuzuhe" style="max-width:350px;"><option value="">不限</option></select>
+      <label>平均:</label><select id="t6_avg"><option value="">不限</option></select>
+      <label>尾数和:</label><select id="t6_weisum"><option value="">不限</option></select>
+      <label>尾数个数:</label><select id="t6_tailcount"><option value="">不限</option></select>
+    </div>
+  `;
+  document.getElementById('tailFilter6').innerHTML = tail6Html;
+  createMultiSelect('t6_weishuzuhe', generateEndingTuples(6));
+  createMultiSelect('t6_avg', generateNumberOptions(4, 35));
+  createMultiSelect('t6_weisum', generateNumberOptions(0, 51));
+  createMultiSelect('t6_tailcount', generateNumberOptions(2, 6), '不限');
+
+  // ---- Blue Ball filters ----
+  createMultiSelect('tb3_sum', generateNumberOptions(3, 23), '不限');
+  createMultiSelect('tb3_diff', generateNumberOptions(1, 11), '不限');
+  createMultiSelect('tb3_sum_diff', generateNumberOptions(2, 24), '不限');
+  createMultiSelect('tb3_zhihebi', generateRatioOptions2d(2), '不限');
+  createMultiSelect('tb3_jioubi', generateRatioOptions2d(2), '不限');
+  createMultiSelect('tb3_daxiaobi', generateRatioOptions2d(2), '不限');
+  createMultiSelect('tb3_dazhongxiaobi', generateRatioOptions3d(2), '不限');
+  createMultiSelect('tb3_lubi', generateRatioOptions3d(2), '不限');
+}
+
+// ====================== Prediction: Tab 5 ======================
+function predict5() {
+  const resultDiv = document.getElementById('result5');
+  if (!recentRed.length) {
+    resultDiv.innerHTML = '<div class="status-msg status-error">❌ 请先获取数据</div>';
+    return;
+  }
+
+  // 位置选择（多选）
+  const posA = getMultiNums('tab5_a');
+  const posB = getMultiNums('tab5_b');
+  const posC = getMultiNums('tab5_c');
+  const posD = getMultiNums('tab5_d');
+  const posE = getMultiNums('tab5_e');
+
+  // 二位和值 S_AB ~ S_DE（多选）
+  const s_ab = getMultiNums('t5_s_ab'), s_ac = getMultiNums('t5_s_ac'), s_ad = getMultiNums('t5_s_ad'), s_ae = getMultiNums('t5_s_ae');
+  const s_bc = getMultiNums('t5_s_bc'), s_bd = getMultiNums('t5_s_bd'), s_be = getMultiNums('t5_s_be');
+  const s_cd = getMultiNums('t5_s_cd'), s_ce = getMultiNums('t5_s_ce'), s_de = getMultiNums('t5_s_de');
+  // 二位差值 D_BA ~ D_ED（多选）
+  const d_ba = getMultiNums('t5_d_ba'), d_ca = getMultiNums('t5_d_ca'), d_da = getMultiNums('t5_d_da'), d_ea = getMultiNums('t5_d_ea');
+  const d_cb = getMultiNums('t5_d_cb'), d_db = getMultiNums('t5_d_db'), d_eb = getMultiNums('t5_d_eb');
+  const d_dc = getMultiNums('t5_d_dc'), d_ec = getMultiNums('t5_d_ec'), d_ed = getMultiNums('t5_d_ed');
+
+  // 比值/综合过滤（多选）
+  const zhihebi = getMultiConds('t5_zhihebi');
+  const jioubi = getMultiConds('t5_jioubi');
+  const acValue = getMultiNums('t5_ac');
+  const daxiaobi = getMultiConds('t5_daxiaobi');
+  const dazhongxiaobi = getMultiConds('t5_dazhongxiaobi');
+  const lubi = getMultiConds('t5_lubi');
+  const sumSabcde = getMultiNums('t5_sum');
+  const sumWx = getMultiNums('t5_sum_wx');
+
+  // 复隔中/冷热温/孤邻串（多选）
+  const fugezhong = getMultiConds('t5_fugezhong');
+  const lengrewen = getMultiConds('t5_lengrewen');
+  const gulinchuan = getMultiConds('t5_gulinchuan');
+
+  // 奇数/偶数/质数/合数和值（多选）
+  const jishuzi = getMultiValues('t5_jishuzi');
+  const jishuzi2 = getMultiNums('t5_jishuzi2');
+  const oushuzi = getMultiValues('t5_oushuzi');
+  const oushuzi2 = getMultiNums('t5_oushuzi2');
+  const zhishuhe = getMultiValues('t5_zhishuhe');
+  const zhishuhe2 = getMultiNums('t5_zhishuhe2');
+  const heshuhe = getMultiValues('t5_heshuhe');
+  const heshuhe2 = getMultiNums('t5_heshuhe2');
+
+  // 尾数（多选）
+  const weishuzuhe = getMultiValues('t5_weishuzuhe');
+  const avg = getMultiNums('t5_avg');
+  const weisum = getMultiNums('t5_weisum');
+  const tailcount = getMultiNums('t5_tailcount');
+
+  // 位置高级过滤（交集多选 + 质合/奇偶单选）
+  const pa = getMultiNums('t5_pa'), pb = getMultiNums('t5_pb'), pc = getMultiNums('t5_pc'), pd = getMultiNums('t5_pd'), pe = getMultiNums('t5_pe');
+  const zhihe_a = getRadioValue('t5_zhihe_a'), zhihe_b = getRadioValue('t5_zhihe_b'), zhihe_c = getRadioValue('t5_zhihe_c'), zhihe_d = getRadioValue('t5_zhihe_d'), zhihe_e = getRadioValue('t5_zhihe_e');
+  const jiou_a = getRadioValue('t5_jiou_a'), jiou_b = getRadioValue('t5_jiou_b'), jiou_c = getRadioValue('t5_jiou_c'), jiou_d = getRadioValue('t5_jiou_d'), jiou_e = getRadioValue('t5_jiou_e');
+
+  const saeInter = getMultiNums('t5_sae_inter'), deaInter = getMultiNums('t5_dea_inter');
+  const sbdInter = getMultiNums('t5_sbd_inter'), ddbInter = getMultiNums('t5_ddb_inter');
+  const sabdeInter = getMultiNums('t5_sabde_inter'), daebdInter = getMultiNums('t5_daebd_inter');
+
+  const ansR = [['前十期大乐透号码']];
+  const ansR2 = [];
+
+  // Add history
+  for (const row of recentRed) {
+    ansR.push(row);
+  }
+  ansR.push([' ', ' ', ' ', ' ', ' ']);
+
+  // Start exhaustive search
+  const startTime = Date.now();
+  let count = 0;
+
+  for (let a = 1; a <= 30; a++) {
+    if (posA.length && !posA.includes(a)) continue;
+    if (pa.length && !pa.includes(a)) continue;
+    if (zhihe_a && !(zhihe_a === '质数' && isPrime(a)) && !(zhihe_a === '合数' && !isPrime(a))) continue;
+    if (jiou_a && !(jiou_a === '奇' && a % 2 === 1) && !(jiou_a === '偶' && a % 2 === 0)) continue;
+
+    for (let b = a + 1; b <= 31; b++) {
+      if (posB.length && !posB.includes(b)) continue;
+      if (pb.length && !pb.includes(b)) continue;
+      if (zhihe_b && !(zhihe_b === '质数' && isPrime(b)) && !(zhihe_b === '合数' && !isPrime(b))) continue;
+      if (jiou_b && !(jiou_b === '奇' && b % 2 === 1) && !(jiou_b === '偶' && b % 2 === 0)) continue;
+
+      const ab = a + b, ba = b - a;
+      if (s_ab.length && !s_ab.includes(ab)) continue;
+      if (d_ba.length && !d_ba.includes(ba)) continue;
+
+      for (let c = b + 1; c <= 32; c++) {
+        if (posC.length && !posC.includes(c)) continue;
+        if (pc.length && !pc.includes(c)) continue;
+        if (zhihe_c && !(zhihe_c === '质数' && isPrime(c)) && !(zhihe_c === '合数' && !isPrime(c))) continue;
+        if (jiou_c && !(jiou_c === '奇' && c % 2 === 1) && !(jiou_c === '偶' && c % 2 === 0)) continue;
+
+        const ac = a + c, ca = c - a, bc = b + c, cb = c - b;
+        if (s_ac.length && !s_ac.includes(ac)) continue;
+        if (d_ca.length && !d_ca.includes(ca)) continue;
+        if (s_bc.length && !s_bc.includes(bc)) continue;
+        if (d_cb.length && !d_cb.includes(cb)) continue;
+
+        for (let d = c + 1; d <= 33; d++) {
+          if (posD.length && !posD.includes(d)) continue;
+          if (pd.length && !pd.includes(d)) continue;
+          if (zhihe_d && !(zhihe_d === '质数' && isPrime(d)) && !(zhihe_d === '合数' && !isPrime(d))) continue;
+          if (jiou_d && !(jiou_d === '奇' && d % 2 === 1) && !(jiou_d === '偶' && d % 2 === 0)) continue;
+
+          const ad = a + d, da = d - a;
+          const bd = b + d, db = d - b;
+          const cd = c + d, dc = d - c;
+          if (s_ad.length && !s_ad.includes(ad)) continue;
+          if (d_da.length && !d_da.includes(da)) continue;
+          if (s_bd.length && !s_bd.includes(bd)) continue;
+          if (d_db.length && !d_db.includes(db)) continue;
+          if (s_cd.length && !s_cd.includes(cd)) continue;
+          if (d_dc.length && !d_dc.includes(dc)) continue;
+
+          for (let e = d + 1; e <= 35; e++) {
+            if (posE.length && !posE.includes(e)) continue;
+            if (pe.length && !pe.includes(e)) continue;
+            if (zhihe_e && !(zhihe_e === '质数' && isPrime(e)) && !(zhihe_e === '合数' && !isPrime(e))) continue;
+            if (jiou_e && !(jiou_e === '奇' && e % 2 === 1) && !(jiou_e === '偶' && e % 2 === 0)) continue;
+
+            const ae = a + e, ea = e - a;
+            const be = b + e, eb = e - b;
+            const ce = c + e, ec = e - c;
+            const de = d + e, ed = e - d;
+            if (s_ae.length && !s_ae.includes(ae)) continue;
+            if (d_ea.length && !d_ea.includes(ea)) continue;
+            if (s_be.length && !s_be.includes(be)) continue;
+            if (d_eb.length && !d_eb.includes(eb)) continue;
+            if (s_ce.length && !s_ce.includes(ce)) continue;
+            if (d_ec.length && !d_ec.includes(ec)) continue;
+            if (s_de.length && !s_de.includes(de)) continue;
+            if (d_ed.length && !d_ed.includes(ed)) continue;
+
+            // 高级交集过滤
+            if (saeInter.length && !saeInter.includes(ae)) continue;
+            if (deaInter.length && !deaInter.includes(ea)) continue;
+            if (sbdInter.length && !sbdInter.includes(bd)) continue;
+            if (ddbInter.length && !ddbInter.includes(db)) continue;
+            const abde = ae + bd;
+            const aebd = ae - bd;
+            if (sabdeInter.length && !sabdeInter.includes(abde)) continue;
+            if (daebdInter.length && !daebdInter.includes(aebd)) continue;
+
+            const lst = [a, b, c, d, e];
+            const sumLst = a + b + c + d + e;
+            const endings = new Set([a % 10, b % 10, c % 10, d % 10, e % 10]);
+            const endingTuple = '(' + [...endings].sort((x, y) => x - y).join(' ') + ')';
+            const avgVal = Math.round(sumLst / 5);
+            const weiVal = a % 10 + b % 10 + c % 10 + d % 10 + e % 10;
+
+            // 和值过滤
+            if (sumSabcde.length && !sumSabcde.includes(sumLst)) continue;
+            // 和值尾数
+            if (sumWx.length && !sumWx.includes(sumLst % 10)) continue;
+
+            // 质合比 / 奇偶比 / AC值 / 大小比 / 大中小比 / 路比
+            if (!judgeZhihebi(lst, zhihebi)) continue;
+            if (!judgeJoubi(lst, jioubi)) continue;
+            if (!judgeAcValue(lst, acValue)) continue;
+            if (!judgeDaxiaobi(lst, daxiaobi, 18)) continue;
+            if (!judgeDazhongxiaobi(lst, dazhongxiaobi, 25, 13)) continue;
+            if (!judgeLubi(lst, lubi)) continue;
+
+            // 复隔中 / 冷热温 / 孤邻串
+            if (!judgeFugezhong(lst, fugezhong)) continue;
+            if (!judgeLerewen(lst, lengrewen)) continue;
+            if (!judgeGulinchuan(lst, gulinchuan)) continue;
+
+            // 奇数/偶数/质数/合数和值
+            if (!judgeJishuzi(lst, jishuzi)) continue;
+            if (!judgeJishuzi2(lst, jishuzi2)) continue;
+            if (!judgeOushuzi(lst, oushuzi)) continue;
+            if (!judgeOushuzi2(lst, oushuzi2)) continue;
+            if (!judgeZhishuhe(lst, zhishuhe)) continue;
+            if (!judgeZhishuhe2(lst, zhishuhe2)) continue;
+            if (!judgeHeshuhe(lst, heshuhe)) continue;
+            if (!judgeHeshuhe2(lst, heshuhe2)) continue;
+
+            // 尾数组合（多选，任一命中即可）
+            if (weishuzuhe.length || tailcount.length) {
+              const matchWei = weishuzuhe.includes(endingTuple);
+              const matchCnt = tailcount.includes(endings.size);
+              if (!matchWei && !matchCnt) continue;
+            }
+
+            // 平均值 / 尾数和
+            if (avg.length && !avg.includes(avgVal)) continue;
+            if (weisum.length && !weisum.includes(weiVal)) continue;
+
+            count++;
+            const hasConsec = (b - a === 1) || (c - b === 1) || (d - c === 1) || (e - d === 1);
+            if (hasConsec) {
+              ansR2.push([a, b, c, d, e]);
+            } else {
+              ansR.push([a, b, c, d, e]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  displayResults(resultDiv, ansR, ansR2, count, elapsed, 5);
+  // 保存完整结果供导出（ansR前12行为标题/历史/空行，跳过）
+  resultData.t5 = { regular: ansR.slice(12), consecutive: ansR2 };
+}
+
+// ====================== Prediction: Tab 6 ======================
+function predict6() {
+  const resultDiv = document.getElementById('result6');
+  if (!recentRed.length) {
+    resultDiv.innerHTML = '<div class="status-msg status-error">❌ 请先获取数据</div>';
+    return;
+  }
+
+  // 位置选择（多选）
+  const posA = getMultiNums('tab6_a');
+  const posB = getMultiNums('tab6_b');
+  const posC = getMultiNums('tab6_c');
+  const posD = getMultiNums('tab6_d');
+  const posE = getMultiNums('tab6_e');
+  const posF = getMultiNums('tab6_f');
+
+  // 二位和值 / 差值（多选）
+  const sumPairs6 = ['ab','ac','ad','ae','af','bc','bd','be','bf','cd','ce','cf','de','df','ef'];
+  const diffPairs6 = ['ba','ca','da','ea','fa','cb','db','eb','fb','dc','ec','fc','ed','fd','fe'];
+  const sums = {};
+  for (const p of sumPairs6) sums['s_' + p] = getMultiNums('t6_s_' + p);
+  const diffs = {};
+  for (const p of diffPairs6) diffs['d_' + p] = getMultiNums('t6_d_' + p);
+
+  // 综合过滤（多选）
+  const zhihebi = getMultiConds('t6_zhihebi');
+  const jioubi = getMultiConds('t6_jioubi');
+  const acValue = getMultiNums('t6_ac');
+  const daxiaobi = getMultiConds('t6_daxiaobi');
+  const dazhongxiaobi = getMultiConds('t6_dazhongxiaobi');
+  const lubi = getMultiConds('t6_lubi');
+  const sumSabcdef = getMultiNums('t6_sum');
+  const sumWx6 = getMultiNums('t6_sum_wx');
+
+  // 复隔中/冷热温/孤邻串（多选）
+  const fugezhong = getMultiConds('t6_fugezhong');
+  const lengrewen = getMultiConds('t6_lengrewen');
+  const gulinchuan = getMultiConds('t6_gulinchuan');
+
+  // 奇数/偶数/质数/合数和值（多选）
+  const jishuzi = getMultiValues('t6_jishuzi');
+  const jishuzi2 = getMultiNums('t6_jishuzi2');
+  const oushuzi = getMultiValues('t6_oushuzi');
+  const oushuzi2 = getMultiNums('t6_oushuzi2');
+  const zhishuhe = getMultiValues('t6_zhishuhe');
+  const zhishuhe2 = getMultiNums('t6_zhishuhe2');
+  const heshuhe = getMultiValues('t6_heshuhe');
+  const heshuhe2 = getMultiNums('t6_heshuhe2');
+
+  // 尾数（多选）
+  const weishuzuhe = getMultiValues('t6_weishuzuhe');
+  const avg = getMultiNums('t6_avg');
+  const weisum = getMultiNums('t6_weisum');
+  const tailcount = getMultiNums('t6_tailcount');
+
+  // 位置高级过滤（交集多选）
+  const pa = getMultiNums('t6_pa'), pb = getMultiNums('t6_pb'), pc = getMultiNums('t6_pc'), pd = getMultiNums('t6_pd'), pe = getMultiNums('t6_pe'), pf = getMultiNums('t6_pf');
+
+  const ansR = [['前十期大乐透']];
+  const ansR2 = [];
+  for (const row of recentRed) ansR.push(row.concat([]));
+  ansR.push([' ', ' ', ' ', ' ', ' ', '']);
+
+  const startTime = Date.now();
+  let count = 0;
+
+  for (let a = 1; a <= 30; a++) {
+    if (posA.length && !posA.includes(a)) continue;
+    if (pa.length && !pa.includes(a)) continue;
+    for (let b = a + 1; b <= 31; b++) {
+      if (posB.length && !posB.includes(b)) continue;
+      if (pb.length && !pb.includes(b)) continue;
+      const ab = a + b, ba = b - a;
+      if (sums.s_ab.length && !sums.s_ab.includes(ab)) continue;
+      if (diffs.d_ba.length && !diffs.d_ba.includes(ba)) continue;
+
+      for (let c = b + 1; c <= 32; c++) {
+        if (posC.length && !posC.includes(c)) continue;
+        if (pc.length && !pc.includes(c)) continue;
+        const ac = a + c, ca = c - a, bc = b + c, cb = c - b;
+        if (sums.s_ac.length && !sums.s_ac.includes(ac)) continue;
+        if (diffs.d_ca.length && !diffs.d_ca.includes(ca)) continue;
+        if (sums.s_bc.length && !sums.s_bc.includes(bc)) continue;
+        if (diffs.d_cb.length && !diffs.d_cb.includes(cb)) continue;
+
+        for (let d = c + 1; d <= 33; d++) {
+          if (posD.length && !posD.includes(d)) continue;
+          if (pd.length && !pd.includes(d)) continue;
+          const ad = a + d, da = d - a, bd = b + d, db = d - b, cd = c + d, dc = d - c;
+          if (sums.s_ad.length && !sums.s_ad.includes(ad)) continue;
+          if (diffs.d_da.length && !diffs.d_da.includes(da)) continue;
+          if (sums.s_bd.length && !sums.s_bd.includes(bd)) continue;
+          if (diffs.d_db.length && !diffs.d_db.includes(db)) continue;
+          if (sums.s_cd.length && !sums.s_cd.includes(cd)) continue;
+          if (diffs.d_dc.length && !diffs.d_dc.includes(dc)) continue;
+
+          for (let e = d + 1; e <= 35; e++) {
+            if (posE.length && !posE.includes(e)) continue;
+            if (pe.length && !pe.includes(e)) continue;
+            const ae = a + e, ea = e - a, be = b + e, eb = e - b;
+            const ce = c + e, ec = e - c, de = d + e, ed = e - d;
+            if (sums.s_ae.length && !sums.s_ae.includes(ae)) continue;
+            if (diffs.d_ea.length && !diffs.d_ea.includes(ea)) continue;
+            if (sums.s_be.length && !sums.s_be.includes(be)) continue;
+            if (diffs.d_eb.length && !diffs.d_eb.includes(eb)) continue;
+            if (sums.s_ce.length && !sums.s_ce.includes(ce)) continue;
+            if (diffs.d_ec.length && !diffs.d_ec.includes(ec)) continue;
+            if (sums.s_de.length && !sums.s_de.includes(de)) continue;
+            if (diffs.d_ed.length && !diffs.d_ed.includes(ed)) continue;
+
+            for (let f = e + 1; f <= 35; f++) {
+              if (posF.length && !posF.includes(f)) continue;
+              if (pf.length && !pf.includes(f)) continue;
+              const af = a + f, fa = f - a, bf = b + f, fb = f - b;
+              const cf = c + f, fc = f - c, df = d + f, fd = f - d;
+              const ef = e + f, fe = f - e;
+              if (sums.s_af.length && !sums.s_af.includes(af)) continue;
+              if (diffs.d_fa.length && !diffs.d_fa.includes(fa)) continue;
+              if (sums.s_bf.length && !sums.s_bf.includes(bf)) continue;
+              if (diffs.d_fb.length && !diffs.d_fb.includes(fb)) continue;
+              if (sums.s_cf.length && !sums.s_cf.includes(cf)) continue;
+              if (diffs.d_fc.length && !diffs.d_fc.includes(fc)) continue;
+              if (sums.s_df.length && !sums.s_df.includes(df)) continue;
+              if (diffs.d_fd.length && !diffs.d_fd.includes(fd)) continue;
+              if (sums.s_ef.length && !sums.s_ef.includes(ef)) continue;
+              if (diffs.d_fe.length && !diffs.d_fe.includes(fe)) continue;
+
+              const lst = [a, b, c, d, e, f];
+              const sumLst = a + b + c + d + e + f;
+              const endings = new Set([a % 10, b % 10, c % 10, d % 10, e % 10, f % 10]);
+              const endingTuple = '(' + [...endings].sort((x, y) => x - y).join(' ') + ')';
+              const avgVal = Math.round(sumLst / 6);
+              const weiVal = a % 10 + b % 10 + c % 10 + d % 10 + e % 10 + f % 10;
+
+              // 和值过滤
+              if (sumSabcdef.length && !sumSabcdef.includes(sumLst)) continue;
+              if (sumWx6.length && !sumWx6.includes(sumLst % 10)) continue;
+
+              // 比值过滤
+              if (!judgeZhihebi(lst, zhihebi)) continue;
+              if (!judgeJoubi(lst, jioubi)) continue;
+              if (!judgeAcValue(lst, acValue)) continue;
+              if (!judgeDaxiaobi(lst, daxiaobi, 17)) continue;
+              if (!judgeDazhongxiaobi(lst, dazhongxiaobi, 23, 12)) continue;
+              if (!judgeLubi(lst, lubi)) continue;
+
+              // 复隔中/冷热温/孤邻串
+              if (!judgeFugezhong(lst, fugezhong)) continue;
+              if (!judgeLerewen(lst, lengrewen)) continue;
+              if (!judgeGulinchuan(lst, gulinchuan)) continue;
+
+              // 奇数/偶数/质数/合数和值
+              if (!judgeJishuzi(lst, jishuzi)) continue;
+              if (!judgeJishuzi2(lst, jishuzi2)) continue;
+              if (!judgeOushuzi(lst, oushuzi)) continue;
+              if (!judgeOushuzi2(lst, oushuzi2)) continue;
+              if (!judgeZhishuhe(lst, zhishuhe)) continue;
+              if (!judgeZhishuhe2(lst, zhishuhe2)) continue;
+              if (!judgeHeshuhe(lst, heshuhe)) continue;
+              if (!judgeHeshuhe2(lst, heshuhe2)) continue;
+
+              // 尾数组合（多选）
+              if (weishuzuhe.length || tailcount.length) {
+                const matchWei = weishuzuhe.includes(endingTuple);
+                const matchCnt = tailcount.includes(endings.size);
+                if (!matchWei && !matchCnt) continue;
+              }
+              // 平均值 / 尾数和
+              if (avg.length && !avg.includes(avgVal)) continue;
+              if (weisum.length && !weisum.includes(weiVal)) continue;
+
+              count++;
+              const hasConsec = (b - a === 1) || (c - b === 1) || (d - c === 1) || (e - d === 1) || (f - e === 1);
+              if (hasConsec) ansR2.push([a, b, c, d, e, f]);
+              else ansR.push([a, b, c, d, e, f]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  displayResults(resultDiv, ansR, ansR2, count, elapsed, 6);
+  // 保存完整结果供导出
+  resultData.t6 = { regular: ansR.slice(12), consecutive: ansR2 };
+}
+
+// ====================== Prediction: Blue Balls ======================
+function predictB() {
+  const resultDiv = document.getElementById('resultB');
+  if (!recentRed.length) {
+    resultDiv.innerHTML = '<div class="status-msg status-error">❌ 请先获取数据</div>';
+    return;
+  }
+
+  const posB1 = getMultiNums('tabB_b1');
+  const posB2 = getMultiNums('tabB_b2');
+
+  const sum = getMultiNums('tb3_sum');
+  const diff = getMultiNums('tb3_diff');
+  const sumDiff = getMultiNums('tb3_sum_diff');
+  const zhihebi = getMultiConds('tb3_zhihebi');
+  const jioubi = getMultiConds('tb3_jioubi');
+  const daxiaobi = getMultiConds('tb3_daxiaobi');
+  const dazhongxiaobi = getMultiConds('tb3_dazhongxiaobi');
+  const lubi = getMultiConds('tb3_lubi');
+
+  const ansB = [];
+  const startTime = Date.now();
+
+  for (let b1 = 1; b1 <= 12; b1++) {
+    if (posB1.length && !posB1.includes(b1)) continue;
+    for (let b2 = b1 + 1; b2 <= 12; b2++) {
+      if (posB2.length && !posB2.includes(b2)) continue;
+      const s = b1 + b2;
+      const d = b2 - b1;
+
+      if (sum.length && !sum.includes(s)) continue;
+      if (diff.length && !diff.includes(d)) continue;
+      if (sumDiff.length && !sumDiff.includes(s) && !sumDiff.includes(d)) continue;
+
+      const lst = [b1, b2];
+      if (!judgeZhihebi(lst, zhihebi)) continue;
+      if (!judgeJoubi(lst, jioubi)) continue;
+      if (!judgeDaxiaobi(lst, daxiaobi, 7)) continue;
+      if (!judgeDazhongxiaobi(lst, dazhongxiaobi, 9, 5)) continue;
+      if (!judgeLubi(lst, lubi)) continue;
+
+      ansB.push([b1, b2]);
+    }
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+  if (ansB.length === 0) {
+    resultDiv.innerHTML = '<div class="status-msg status-info">未找到符合条件的蓝球组合</div>';
+    return;
+  }
+
+  let html = '<div class="result-count">总个数: ' + ansB.length + ' (耗时' + elapsed + 's)</div>';
+  html += '<div class="scroll-x"><table class="result-table"><thead><tr><th>B1</th><th>B2</th></tr></thead><tbody>';
+  for (const row of ansB) {
+    html += '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td></tr>';
+  }
+  html += '</tbody></table></div>';
+  resultDiv.innerHTML = html;
+  // 保存完整结果供导出
+  resultData.tb = ansB;
+}
+
+// ====================== Display Results ======================
+// 表格最多显示的行数（超大表格会导致页面卡顿/崩溃，完整结果导出Excel查看）
+const MAX_DISPLAY_ROWS = 1000;
+
+function displayResults(resultDiv, ansR, ansR2, count, elapsed, len) {
+  const totalValid = ansR.length + ansR2.length - 12; // subtract header rows
+  if (totalValid <= 0) {
+    resultDiv.innerHTML = '<div class="status-msg status-info">未找到符合条件的组合 (耗时' + elapsed + 's)</div>';
+    return;
+  }
+
+  // 生成表头
+  let head = '<th>#</th>';
+  for (let i = 0; i < len; i++) head += '<th>' + String.fromCharCode(65 + i) + '</th>';
+
+  let html = '<div class="result-count">总个数: ' + totalValid +
+    ' · 连号: ' + ansR2.length + ' · 常规: ' + (ansR.length - 12) + ' · 耗时' + elapsed + 's</div>';
+
+  // 常规组合：默认收起的下拉表格（限制显示行数，防止超大表格导致页面崩溃）
+  if (ansR.length > 12) {
+    const totalR = ansR.length - 12;
+    const showR = Math.min(totalR, MAX_DISPLAY_ROWS);
+    html += '<div class="section-title collapsed" onclick="toggleResultSection(this)">📋 常规组合 (' + totalR + ')</div>';
+    html += '<div class="section-body collapsed"><div class="result-table-wrap scroll-x">';
+    html += '<table class="result-table"><thead><tr>' + head + '</tr></thead><tbody>';
+    for (let i = 12; i < 12 + showR; i++) {
+      html += '<tr><td>' + (i - 11) + '</td>';
+      for (const n of ansR[i]) html += '<td>' + n + '</td>';
+      html += '</tr>';
+    }
+    if (totalR > showR) {
+      html += '<tr><td colspan="' + (len + 1) + '" style="background:#fff8e1;color:#e65100;">仅显示前 ' + showR + ' 行，共 ' + totalR + ' 行，完整结果请点击下方「⬇️ 导出结果」</td></tr>';
+    }
+    html += '</tbody></table></div></div>';
+  }
+
+  // 连号组合：默认收起的下拉表格（同样限制行数）
+  if (ansR2.length > 0) {
+    const totalR2 = ansR2.length;
+    const showR2 = Math.min(totalR2, MAX_DISPLAY_ROWS);
+    html += '<div class="section-title collapsed" onclick="toggleResultSection(this)" style="margin-top:6px;">🔗 连号组合 (' + totalR2 + ')</div>';
+    html += '<div class="section-body collapsed"><div class="result-table-wrap scroll-x">';
+    html += '<table class="result-table"><thead><tr>' + head + '</tr></thead><tbody>';
+    for (let i = 0; i < showR2; i++) {
+      html += '<tr><td>' + (i + 1) + '</td>';
+      for (const n of ansR2[i]) html += '<td>' + n + '</td>';
+      html += '</tr>';
+    }
+    if (totalR2 > showR2) {
+      html += '<tr><td colspan="' + (len + 1) + '" style="background:#fff8e1;color:#e65100;">仅显示前 ' + showR2 + ' 行，共 ' + totalR2 + ' 行，完整结果请点击下方「⬇️ 导出结果」</td></tr>';
+    }
+    html += '</tbody></table></div></div>';
+  }
+
+  resultDiv.innerHTML = html;
+}
+
+// ====================== Clear Functions ======================
+function clearTab5() {
+  if (!confirm('确定要清空前五红球的所有过滤条件吗？')) return;
+  // 清空所有自定义多选框（复选框+隐藏select一并重置）
+  document.querySelectorAll('#tab5 .mselect').forEach(resetMSelect);
+  // 重置单选按钮为"不限"
+  document.querySelectorAll('#tab5 input[type="radio"]').forEach(r => { if (r.value === '') r.checked = true; });
+  document.getElementById('result5').innerHTML = '';
+}
+
+function clearTab6() {
+  if (!confirm('确定要清空前六红球的所有过滤条件吗？')) return;
+  document.querySelectorAll('#tab6 .mselect').forEach(resetMSelect);
+  document.querySelectorAll('#tab6 input[type="radio"]').forEach(r => { if (r.value === '') r.checked = true; });
+  document.getElementById('result6').innerHTML = '';
+}
+
+function clearTabB() {
+  if (!confirm('确定要清空后区蓝球的所有过滤条件吗？')) return;
+  document.querySelectorAll('#tabB .mselect').forEach(resetMSelect);
+  document.querySelectorAll('#tabB input[type="radio"]').forEach(r => { if (r.value === '') r.checked = true; });
+  document.getElementById('resultB').innerHTML = '';
+}
+
+// ====================== 过滤预设功能 ======================
+const PRESET_KEY = 'dlt_filter_presets';
+const MAX_PRESETS = 10;
+
+function getPresets() {
+  try { return JSON.parse(localStorage.getItem(PRESET_KEY)) || []; } catch (e) { return []; }
+}
+function savePresets(presets) {
+  try { localStorage.setItem(PRESET_KEY, JSON.stringify(presets)); } catch (e) { console.error(e); }
+}
+
+// 捕获当前所有过滤条件（多选框 + 单选按钮）
+function captureState() {
+  const state = { selects: {}, radios: {} };
+  document.querySelectorAll('.mselect').forEach(w => {
+    const id = w.dataset.selectId;
+    if (!id) return;
+    state.selects[id] = Array.from(w.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+  });
+  document.querySelectorAll('input[type="radio"]:checked').forEach(r => {
+    state.radios[r.name] = r.value;
+  });
+  return state;
+}
+
+// 应用保存的过滤条件
+function applyState(state) {
+  if (!state) return;
+  for (const id in state.selects) {
+    const w = document.querySelector('.mselect[data-select-id="' + id + '"]');
+    if (!w) continue;
+    const vals = state.selects[id] || [];
+    w.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = vals.includes(cb.value);
+    });
+    syncMSelect(w);
+  }
+  for (const name in state.radios) {
+    document.querySelectorAll('input[type="radio"][name="' + name + '"]').forEach(r => {
+      r.checked = (r.value === state.radios[name]);
+    });
+  }
+}
+
+// 修改过滤条件时，预设下拉框重置为"选择预设"（当前状态已与已选预设不符）
+document.addEventListener('change', (e) => {
+  if (e.target.matches('.mselect-panel input[type="checkbox"]') || e.target.matches('input[type="radio"]')) {
+    const sel = document.getElementById('presetSelect');
+    if (sel) sel.value = '';
+  }
+});
+
+// 刷新预设下拉列表
+function refreshPresetSelect() {
+  const presets = getPresets();
+  const sel = document.getElementById('presetSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">-- 选择预设 --</option>';
+  presets.forEach((p, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = p.name + ' (' + p.savedAt + ')';
+    sel.appendChild(o);
+  });
+  if (current !== '' && presets[parseInt(current)]) sel.value = current;
+  const countEl = document.getElementById('presetCount');
+  if (countEl) countEl.textContent = presets.length ? ('已保存 ' + presets.length + '/' + MAX_PRESETS) : '';
+}
+
+// 保存当前过滤条件为预设
+function savePreset() {
+  const presets = getPresets();
+  const sel = document.getElementById('presetSelect');
+  const now = new Date();
+  const savedAt = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') +
+    ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  const state = captureState();
+  let name;
+
+  if (sel.value !== '') {
+    // 覆盖当前选中的预设
+    const idx = parseInt(sel.value);
+    if (!confirm('要覆盖预设「' + presets[idx].name + '」吗？')) return;
+    presets[idx] = { name: presets[idx].name, savedAt, state };
+    name = presets[idx].name;
+  } else {
+    if (presets.length >= MAX_PRESETS) {
+      alert('最多只能保存 ' + MAX_PRESETS + ' 个预设，请先删除不需要的预设');
+      return;
+    }
+    name = prompt('请输入预设名称：');
+    if (!name || !name.trim()) return;
+    name = name.trim();
+    const dup = presets.findIndex(p => p.name === name);
+    if (dup >= 0) {
+      if (!confirm('已存在同名预设「' + name + '」，要覆盖它吗？')) return;
+      presets[dup] = { name, savedAt, state };
+      savePresets(presets);
+      refreshPresetSelect();
+      sel.value = dup;
+      alert('预设「' + name + '」已保存');
+      return;
+    }
+    presets.push({ name, savedAt, state });
+  }
+
+  savePresets(presets);
+  refreshPresetSelect();
+  const idx = presets.findIndex(p => p.name === name);
+  if (idx >= 0) sel.value = idx;
+  alert('预设「' + name + '」已保存');
+}
+
+// 应用选中的预设
+function applyPreset() {
+  const sel = document.getElementById('presetSelect');
+  if (sel.value === '') return;
+  const presets = getPresets();
+  const p = presets[parseInt(sel.value)];
+  if (!p) return;
+  applyState(p.state);
+  alert('已应用预设「' + p.name + '」');
+}
+
+// 删除选中的预设
+function deletePreset() {
+  const sel = document.getElementById('presetSelect');
+  if (sel.value === '') { alert('请先选择一个预设'); return; }
+  const presets = getPresets();
+  const idx = parseInt(sel.value);
+  const name = presets[idx].name;
+  if (!confirm('确定删除预设「' + name + '」吗？')) return;
+  presets.splice(idx, 1);
+  savePresets(presets);
+  refreshPresetSelect();
+  alert('预设「' + name + '」已删除');
+}
+
+// 导出完整预测结果为多Sheet的Excel(.xlsx)，常规/连号分开
+// 从完整数据数组导出（不受页面显示1000行限制）
+function exportResults() {
+  if (typeof XLSX === 'undefined') {
+    console.error('导出组件SheetJS未加载');
+    return;
+  }
+  doExport();
+}
+
+function doExport() {
+  // 检查是否有可导出的结果
+  const hasAny = (resultData.t5 && (resultData.t5.regular.length || resultData.t5.consecutive.length))
+    || (resultData.t6 && (resultData.t6.regular.length || resultData.t6.consecutive.length))
+    || (resultData.tb && resultData.tb.length);
+  if (!hasAny) {
+    alert('暂无结果可导出，请先运行预测');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const addSheet = (name, data, cols) => {
+    if (!data || !data.length) return;
+    const aoa = [cols];
+    data.forEach((row, i) => aoa.push([i + 1, ...row]));
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // 设置列宽
+    ws['!cols'] = [{ wch: 8 }, ...cols.slice(1).map(() => ({ wch: 8 }))];
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  };
+
+  if (resultData.t5) {
+    addSheet('前五_常规', resultData.t5.regular, ['序号', 'A', 'B', 'C', 'D', 'E']);
+    addSheet('前五_连号', resultData.t5.consecutive, ['序号', 'A', 'B', 'C', 'D', 'E']);
+  }
+  if (resultData.t6) {
+    addSheet('前六_常规', resultData.t6.regular, ['序号', 'A', 'B', 'C', 'D', 'E', 'F']);
+    addSheet('前六_连号', resultData.t6.consecutive, ['序号', 'A', 'B', 'C', 'D', 'E', 'F']);
+  }
+  if (resultData.tb && resultData.tb.length) {
+    addSheet('蓝球', resultData.tb, ['序号', 'B1', 'B2']);
+  }
+
+  // 文件名精确到毫秒：大乐透预测_2026-07-31_16-00-29-123.xlsx
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fname = '大乐透预测_' + now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+    '_' + pad(now.getHours()) + '-' + pad(now.getMinutes()) + '-' + pad(now.getSeconds()) + '-' +
+    String(now.getMilliseconds()).padStart(3, '0') + '.xlsx';
+  XLSX.writeFile(wb, fname);
+}
+
+// ====================== Init on Load ======================
+window.onload = function() {
+  initUI();
+  fetchAndProcess();
+  refreshPresetSelect();
+};
+</script>
+</body>
+</html>
