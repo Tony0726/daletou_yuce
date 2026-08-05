@@ -1353,10 +1353,10 @@ function useMockData() {
 // ====================== Init UI ======================
 function initUI() {
   // Tab 5 position filters → 多选下拉框（标签与下拉框同行）
-  // 位置从小到大排列：第i位最小为i，最大依次为 30,31,32,33,35
+  // 位置从小到大排列：5个号从1~35取，第i位真理论上限为 31,32,33,34,35
   const posNames5 = ['第一位(A)', '第二位(B)', '第三位(C)', '第四位(D)', '第五位(E)'];
   const posIds5 = ['tab5_a', 'tab5_b', 'tab5_c', 'tab5_d', 'tab5_e'];
-  const posRanges5 = [[1,30], [2,31], [3,32], [4,33], [5,35]];
+  const posRanges5 = [[1,31], [2,32], [3,33], [4,34], [5,35]];
   let html5 = '';
   for (let i = 0; i < 5; i++) {
     html5 += '<div class="pos-row"><span class="pos-title">' + posNames5[i] + '</span>';
@@ -1368,10 +1368,10 @@ function initUI() {
   }
 
   // Tab 6 position filters → 多选下拉框（标签与下拉框同行）
-  // 位置从小到大排列：第i位最小为i，最大依次为 30,31,32,33,35,35
+  // 位置从小到大排列：6个号从1~35取，第i位真理论上限为 30,31,32,33,34,35
   const posNames6 = ['第一位(A)', '第二位(B)', '第三位(C)', '第四位(D)', '第五位(E)', '第六位(F)'];
   const posIds6 = ['tab6_a', 'tab6_b', 'tab6_c', 'tab6_d', 'tab6_e', 'tab6_f'];
-  const posRanges6 = [[1,30], [2,31], [3,32], [4,33], [5,35], [6,35]];
+  const posRanges6 = [[1,30], [2,31], [3,32], [4,33], [5,34], [6,35]];
   let html6 = '';
   for (let i = 0; i < 6; i++) {
     html6 += '<div class="pos-row"><span class="pos-title">' + posNames6[i] + '</span>';
@@ -1846,13 +1846,13 @@ function predict5() {
   const startTime = Date.now();
   let count = 0;
 
-  for (let a = 1; a <= 30; a++) {
+  for (let a = 1; a <= 31; a++) {
     if (posA.length && !posA.includes(a)) continue;
     if (pa.length && !pa.includes(a)) continue;
     if (zhihe_a && !(zhihe_a === '质数' && isPrime(a)) && !(zhihe_a === '合数' && !isPrime(a))) continue;
     if (jiou_a && !(jiou_a === '奇' && a % 2 === 1) && !(jiou_a === '偶' && a % 2 === 0)) continue;
 
-    for (let b = a + 1; b <= 31; b++) {
+    for (let b = a + 1; b <= 32; b++) {
       if (posB.length && !posB.includes(b)) continue;
       if (pb.length && !pb.includes(b)) continue;
       if (zhihe_b && !(zhihe_b === '质数' && isPrime(b)) && !(zhihe_b === '合数' && !isPrime(b))) continue;
@@ -1862,7 +1862,7 @@ function predict5() {
       if (s_ab.length && !s_ab.includes(ab)) continue;
       if (d_ba.length && !d_ba.includes(ba)) continue;
 
-      for (let c = b + 1; c <= 32; c++) {
+      for (let c = b + 1; c <= 33; c++) {
         if (posC.length && !posC.includes(c)) continue;
         if (pc.length && !pc.includes(c)) continue;
         if (zhihe_c && !(zhihe_c === '质数' && isPrime(c)) && !(zhihe_c === '合数' && !isPrime(c))) continue;
@@ -1874,7 +1874,7 @@ function predict5() {
         if (s_bc.length && !s_bc.includes(bc)) continue;
         if (d_cb.length && !d_cb.includes(cb)) continue;
 
-        for (let d = c + 1; d <= 33; d++) {
+        for (let d = c + 1; d <= 34; d++) {
           if (posD.length && !posD.includes(d)) continue;
           if (pd.length && !pd.includes(d)) continue;
           if (zhihe_d && !(zhihe_d === '质数' && isPrime(d)) && !(zhihe_d === '合数' && !isPrime(d))) continue;
