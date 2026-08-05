@@ -133,6 +133,11 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
   .result-table-wrap { max-height:300px; }
   .section-body.scroll-x { -webkit-overflow-scrolling:touch; }
 }
+/* 横屏手机（宽而矮）：过滤预设下拉与保存/删除按钮占满整行 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .preset-panel select { flex:1; min-width:0; }
+  .preset-panel .btn-success, .preset-panel .btn-warning { flex:1; }
+}
 /* 紧凑布局 */
 .panel { padding:10px 12px; margin-bottom:8px; }
 .section { margin-bottom:8px; }
@@ -196,7 +201,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
   </div>
 
   <!-- 过滤预设管理（放在前五红球上方） -->
-  <div class="panel">
+  <div class="panel preset-panel">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="white-space:nowrap;font-size:13px;color:#666;">🎚️ 过滤预设：</span>
       <select id="presetSelect" onchange="applyPreset()" style="min-width:140px;"><option value="">-- 选择预设 --</option></select>
@@ -204,8 +209,8 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
     <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
       <button class="btn btn-success" onclick="savePreset()">💾 保存当前</button>
       <button class="btn btn-warning" onclick="deletePreset()">🗑️ 删除预设</button>
-      <span style="font-size:12px;color:#999;" id="presetCount"></span>
     </div>
+    <div style="margin-top:6px;font-size:12px;color:#999;text-align:center;"><span id="presetCount"></span></div>
   </div>
 
   <!-- 标签页 -->
@@ -273,7 +278,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
       <h2 class="collapse-head collapsed" onclick="togglePanel(this)">🔢 出现次数统计</h2>
       <div class="panel-body collapsed">
         <div class="filter-row">
-          <label style="min-width:88px;">显示出现次数:</label>
+          <label style="min-width:88px;flex:1;">显示出现次数:</label>
           <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
             <input type="checkbox" class="appearToggle" onchange="onAppearToggle(this)">
             <span class="slider"></span>
@@ -352,7 +357,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
       <h2 class="collapse-head collapsed" onclick="togglePanel(this)">🔢 出现次数统计</h2>
       <div class="panel-body collapsed">
         <div class="filter-row">
-          <label style="min-width:88px;">显示出现次数:</label>
+          <label style="min-width:88px;flex:1;">显示出现次数:</label>
           <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
             <input type="checkbox" class="appearToggle" onchange="onAppearToggle(this)">
             <span class="slider"></span>
@@ -414,7 +419,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
       <h2 class="collapse-head collapsed" onclick="togglePanel(this)">🔢 出现次数统计</h2>
       <div class="panel-body collapsed">
         <div class="filter-row">
-          <label style="min-width:88px;">显示出现次数:</label>
+          <label style="min-width:88px;flex:1;">显示出现次数:</label>
           <label class="switch" title="开启后在结果表格末列显示整组在近200期的出现次数">
             <input type="checkbox" class="appearToggle" onchange="onAppearToggle(this)">
             <span class="slider"></span>
