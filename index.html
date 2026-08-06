@@ -76,6 +76,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
 .btn-default { background:#e0e0e0; color:#333; }
 .btn-default:hover { background:#bdbdbd; }
 .btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+.btn-top { background:#2e7d32; color:#fff; flex: 1;}
 /* 纵向按钮组：每个按钮占一行，全宽 */
 .btn-group-vertical { display:flex; flex-direction:column; gap:8px; }
 .btn-group-vertical .btn { width:100%; }
@@ -301,6 +302,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
         <button class="btn btn-primary" onclick="runWithLoading(predict5)">🔍 开始预测</button>
         <button class="btn btn-warning" onclick="clearTab5()">🗑️ 清空过滤</button>
         <button class="btn btn-info" onclick="exportResults()">⬇️ 导出结果</button>
+        <button class="btn btn-top" onclick="scrollToTop()">⬆️ 返回顶部</button>
       </div>
       <div id="result5" style="margin-top:12px;"></div>
     </div>
@@ -380,6 +382,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
         <button class="btn btn-primary" onclick="runWithLoading(predict6)">🔍 开始预测</button>
         <button class="btn btn-warning" onclick="clearTab6()">🗑️ 清空过滤</button>
         <button class="btn btn-info" onclick="exportResults()">⬇️ 导出结果</button>
+        <button class="btn btn-top" onclick="scrollToTop()">⬆️ 返回顶部</button>
       </div>
       <div id="result6" style="margin-top:12px;"></div>
     </div>
@@ -442,15 +445,11 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
         <button class="btn btn-primary" onclick="runWithLoading(predictB)">🔍 开始预测</button>
         <button class="btn btn-warning" onclick="clearTabB()">🗑️ 清空过滤</button>
         <button class="btn btn-info" onclick="exportResults()">⬇️ 导出结果</button>
+        <button class="btn btn-top" onclick="scrollToTop()">⬆️ 返回顶部</button>
       </div>
       <div id="resultB" style="margin-top:12px;"></div>
     </div>
   </div>
-</div>
-
-<!-- 返回顶部 -->
-<div class="back-top">
-  <button class="btn btn-primary" onclick="scrollToTop()">⬆ 返回顶部</button>
 </div>
 
 <!-- 预测中加载遮罩 -->
