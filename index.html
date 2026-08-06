@@ -51,12 +51,13 @@ body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f
 @keyframes spin { to { transform:rotate(360deg); } }
 .filter-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:center; }
 .filter-row label { font-size:13px; color:#666; min-width:60px; }
-/* 高级过滤(位置交集+质合/奇偶)：每个过滤器=标签+选项作为一个整体单元，同行显示，覆盖移动端纵向堆叠 */
-#posAdvFilter5 .filter-row, #posAdvFilter6 .filter-row { flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 10px; }
-#posAdvFilter5 .filter-item, #posAdvFilter6 .filter-item { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:0 0 auto; }
-#posAdvFilter5 .filter-item label, #posAdvFilter6 .filter-item label { flex:0 0 auto; white-space:nowrap; min-width:auto; }
-#posAdvFilter5 .filter-item .radio-group, #posAdvFilter6 .filter-item .radio-group { flex:0 1 auto; }
-#posAdvFilter5 .filter-item .mselect, #posAdvFilter6 .filter-item .mselect { flex:0 1 auto; width:auto; min-width:80px; }
+/* 过滤面板(位置交集质合奇偶/综合值/比值/复隔中冷热温孤邻串/奇偶质合数和值/尾数组合)：
+   每个过滤器=标签+选项作为一个整体单元同行显示，覆盖移动端纵向堆叠 */
+#tab5 .section-body .filter-row, #tab6 .section-body .filter-row { flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+#tab5 .section-body .filter-item, #tab6 .section-body .filter-item { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:0 0 auto; }
+#tab5 .section-body .filter-item label, #tab6 .section-body .filter-item label { flex:0 0 auto; white-space:nowrap; min-width:auto; }
+#tab5 .section-body .filter-item .radio-group, #tab6 .section-body .filter-item .radio-group { flex:0 1 auto; }
+#tab5 .section-body .filter-item .mselect, #tab6 .section-body .filter-item .mselect { flex:0 1 auto; width:auto; min-width:80px; }
 .number-grid { display:flex; flex-wrap:wrap; gap:4px; }
 .number-grid label { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:1px solid #ddd; cursor:pointer; font-size:13px; transition:all .15s; background:#fafafa; min-width:unset; }
 .number-grid label:hover { border-color:#d32f2f; background:#ffebee; }
@@ -263,7 +264,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
           <div class="section-body collapsed" id="posAdvFilter5"></div>
         </div>
         <div class="section">
-          <div class="section-title collapsed" onclick="toggleSection(this)">综合值过滤</div>
+          <div class="section-title collapsed" onclick="toggleSection(this)">AC值 · 和值 · 尾数</div>
           <div class="section-body collapsed" id="compFilter5"></div>
         </div>
         <div class="section">
@@ -279,7 +280,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
           <div class="section-body collapsed" id="sumTypeFilter5"></div>
         </div>
         <div class="section">
-          <div class="section-title collapsed" onclick="toggleSection(this)">尾数组合 · AC值 · 平均值 · 尾数和</div>
+          <div class="section-title collapsed" onclick="toggleSection(this)">尾数组合 · 平均值 · 尾数和</div>
           <div class="section-body collapsed" id="tailFilter5"></div>
         </div>
       </div>
@@ -344,7 +345,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
           <div class="section-body collapsed" id="posAdvFilter6"></div>
         </div>
         <div class="section">
-          <div class="section-title collapsed" onclick="toggleSection(this)">综合值过滤</div>
+          <div class="section-title collapsed" onclick="toggleSection(this)">AC值 · 和值 · 尾数</div>
           <div class="section-body collapsed" id="compFilter6"></div>
         </div>
         <div class="section">
@@ -360,7 +361,7 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
           <div class="section-body collapsed" id="sumTypeFilter6"></div>
         </div>
         <div class="section">
-          <div class="section-title collapsed" onclick="toggleSection(this)">尾数组合 · AC值 · 平均值 · 尾数和 · 尾数个数</div>
+          <div class="section-title collapsed" onclick="toggleSection(this)">尾数组合 · 平均值 · 尾数和 · 尾数个数</div>
           <div class="section-body collapsed" id="tailFilter6"></div>
         </div>
       </div>
@@ -1562,13 +1563,13 @@ function initUI() {
   // Tab 5 比值过滤（质合比/奇偶比/大小比/大中小比/路比）
   const ratio5Html = `
     <div class="filter-row">
-      <label>质合比:</label><select id="t5_zhihebi"><option value="">不限</option></select>
-      <label>奇偶比:</label><select id="t5_jioubi"><option value="">不限</option></select>
-      <label>大小比(≥18):</label><select id="t5_daxiaobi"><option value="">不限</option></select>
-      <label>大中小比(≥25/≥13):</label><select id="t5_dazhongxiaobi"><option value="">不限</option></select>
+      <span class="filter-item"><label>质合比:</label><select id="t5_zhihebi"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>奇偶比:</label><select id="t5_jioubi"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>大小比(≥18):</label><select id="t5_daxiaobi"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>大中小比(≥25/≥13):</label><select id="t5_dazhongxiaobi"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>路比(0/1/2):</label><select id="t5_lubi"><option value="">不限</option></select>
+      <span class="filter-item"><label>路比(0/1/2):</label><select id="t5_lubi"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('ratioFilter5').innerHTML = ratio5Html;
@@ -1581,9 +1582,9 @@ function initUI() {
   // Tab 5 综合值过滤（AC值/和值/尾数）
   const comp5Html = `
     <div class="filter-row">
-      <label>AC值:</label><select id="t5_ac"><option value="">不限</option></select>
-      <label>和值(S_ABCDE):</label><select id="t5_sum"><option value="">不限</option></select>
-      <label>尾数:</label><select id="t5_sum_wx"><option value="">不限</option></select>
+      <span class="filter-item"><label>AC值:</label><select id="t5_ac"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>和值(S_ABCDE):</label><select id="t5_sum"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>尾数:</label><select id="t5_sum_wx"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('compFilter5').innerHTML = comp5Html;
@@ -1594,9 +1595,9 @@ function initUI() {
   // Tab 5 复隔中/冷热温/孤邻串
   const clz5Html = `
     <div class="filter-row">
-      <label>复隔中:</label><select id="t5_fugezhong"><option value="">不限</option></select>
-      <label>冷热温:</label><select id="t5_lengrewen"><option value="">不限</option></select>
-      <label>孤邻串:</label><select id="t5_gulinchuan"><option value="">不限</option></select>
+      <span class="filter-item"><label>复隔中:</label><select id="t5_fugezhong"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>冷热温:</label><select id="t5_lengrewen"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>孤邻串:</label><select id="t5_gulinchuan"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('clzFilter5').innerHTML = clz5Html;
@@ -1607,20 +1608,20 @@ function initUI() {
   // Tab 5 奇数/偶数/质数/合数和值
   const sumType5Html = `
     <div class="filter-row">
-      <label>奇数和分级:</label><select id="t5_jishuzi" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>奇数和值:</label><select id="t5_jishuzi2"><option value="">不限</option></select>
+      <span class="filter-item"><label>奇数和分级:</label><select id="t5_jishuzi" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>奇数和值:</label><select id="t5_jishuzi2"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>偶数和分级:</label><select id="t5_oushuzi" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>偶数和值:</label><select id="t5_oushuzi2"><option value="">不限</option></select>
+      <span class="filter-item"><label>偶数和分级:</label><select id="t5_oushuzi" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>偶数和值:</label><select id="t5_oushuzi2"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>质数和分级:</label><select id="t5_zhishuhe" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>质数和值:</label><select id="t5_zhishuhe2"><option value="">不限</option></select>
+      <span class="filter-item"><label>质数和分级:</label><select id="t5_zhishuhe" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>质数和值:</label><select id="t5_zhishuhe2"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>合数和分级:</label><select id="t5_heshuhe" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>合数和值:</label><select id="t5_heshuhe2"><option value="">不限</option></select>
+      <span class="filter-item"><label>合数和分级:</label><select id="t5_heshuhe" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>合数和值:</label><select id="t5_heshuhe2"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('sumTypeFilter5').innerHTML = sumType5Html;
@@ -1636,10 +1637,10 @@ function initUI() {
   // Tab 5 尾数
   const tail5Html = `
     <div class="filter-row">
-      <label>尾数组合:</label><select id="t5_weishuzuhe" style="max-width:300px;"><option value="">不限</option></select>
-      <label>平均:</label><select id="t5_avg"><option value="">不限</option></select>
-      <label>尾数和:</label><select id="t5_weisum"><option value="">不限</option></select>
-      <label>尾数个数:</label><select id="t5_tailcount"><option value="">不限</option></select>
+      <span class="filter-item"><label>尾数组合:</label><select id="t5_weishuzuhe" style="max-width:300px;"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>平均:</label><select id="t5_avg"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>尾数和:</label><select id="t5_weisum"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>尾数个数:</label><select id="t5_tailcount"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('tailFilter5').innerHTML = tail5Html;
@@ -1713,13 +1714,13 @@ function initUI() {
   // Tab 6 比值过滤（质合比/奇偶比/大小比/大中小比/路比）
   const ratio6Html = `
     <div class="filter-row">
-      <label>质合比:</label><select id="t6_zhihebi"><option value="">不限</option></select>
-      <label>奇偶比:</label><select id="t6_jioubi"><option value="">不限</option></select>
-      <label>大小比(≥17):</label><select id="t6_daxiaobi"><option value="">不限</option></select>
-      <label>大中小比(≥23/≥12):</label><select id="t6_dazhongxiaobi"><option value="">不限</option></select>
+      <span class="filter-item"><label>质合比:</label><select id="t6_zhihebi"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>奇偶比:</label><select id="t6_jioubi"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>大小比(≥17):</label><select id="t6_daxiaobi"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>大中小比(≥23/≥12):</label><select id="t6_dazhongxiaobi"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>路比:</label><select id="t6_lubi"><option value="">不限</option></select>
+      <span class="filter-item"><label>路比:</label><select id="t6_lubi"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('ratioFilter6').innerHTML = ratio6Html;
@@ -1732,9 +1733,9 @@ function initUI() {
   // Tab 6 综合值过滤（AC值/和值/尾数）
   const comp6Html = `
     <div class="filter-row">
-      <label>AC值:</label><select id="t6_ac"><option value="">不限</option></select>
-      <label>和值(S_ABCDEF):</label><select id="t6_sum"><option value="">不限</option></select>
-      <label>尾数:</label><select id="t6_sum_wx"><option value="">不限</option></select>
+      <span class="filter-item"><label>AC值:</label><select id="t6_ac"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>和值(S_ABCDEF):</label><select id="t6_sum"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>尾数:</label><select id="t6_sum_wx"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('compFilter6').innerHTML = comp6Html;
@@ -1745,9 +1746,9 @@ function initUI() {
   // Tab 6 复隔中/冷热温/孤邻串
   const clz6Html = `
     <div class="filter-row">
-      <label>复隔中:</label><select id="t6_fugezhong"><option value="">不限</option></select>
-      <label>冷热温:</label><select id="t6_lengrewen"><option value="">不限</option></select>
-      <label>孤邻串:</label><select id="t6_gulinchuan"><option value="">不限</option></select>
+      <span class="filter-item"><label>复隔中:</label><select id="t6_fugezhong"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>冷热温:</label><select id="t6_lengrewen"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>孤邻串:</label><select id="t6_gulinchuan"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('clzFilter6').innerHTML = clz6Html;
@@ -1758,20 +1759,20 @@ function initUI() {
   // Tab 6 sum-type filters
   const sumType6Html = `
     <div class="filter-row">
-      <label>奇数和分级:</label><select id="t6_jishuzi" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>奇数和值:</label><select id="t6_jishuzi2"><option value="">不限</option></select>
+      <span class="filter-item"><label>奇数和分级:</label><select id="t6_jishuzi" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>奇数和值:</label><select id="t6_jishuzi2"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>偶数和分级:</label><select id="t6_oushuzi" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>偶数和值:</label><select id="t6_oushuzi2"><option value="">不限</option></select>
+      <span class="filter-item"><label>偶数和分级:</label><select id="t6_oushuzi" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>偶数和值:</label><select id="t6_oushuzi2"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>质数和分级:</label><select id="t6_zhishuhe" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>质数和值:</label><select id="t6_zhishuhe2"><option value="">不限</option></select>
+      <span class="filter-item"><label>质数和分级:</label><select id="t6_zhishuhe" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>质数和值:</label><select id="t6_zhishuhe2"><option value="">不限</option></select></span>
     </div>
     <div class="filter-row">
-      <label>合数和分级:</label><select id="t6_heshuhe" multiple><option>小</option><option>中</option><option>大</option></select>
-      <label>合数和值:</label><select id="t6_heshuhe2"><option value="">不限</option></select>
+      <span class="filter-item"><label>合数和分级:</label><select id="t6_heshuhe" multiple><option>小</option><option>中</option><option>大</option></select></span>
+      <span class="filter-item"><label>合数和值:</label><select id="t6_heshuhe2"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('sumTypeFilter6').innerHTML = sumType6Html;
@@ -1787,10 +1788,10 @@ function initUI() {
   // Tab 6 tail
   const tail6Html = `
     <div class="filter-row">
-      <label>尾数组合:</label><select id="t6_weishuzuhe" style="max-width:350px;"><option value="">不限</option></select>
-      <label>平均:</label><select id="t6_avg"><option value="">不限</option></select>
-      <label>尾数和:</label><select id="t6_weisum"><option value="">不限</option></select>
-      <label>尾数个数:</label><select id="t6_tailcount"><option value="">不限</option></select>
+      <span class="filter-item"><label>尾数组合:</label><select id="t6_weishuzuhe" style="max-width:350px;"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>平均:</label><select id="t6_avg"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>尾数和:</label><select id="t6_weisum"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>尾数个数:</label><select id="t6_tailcount"><option value="">不限</option></select></span>
     </div>
   `;
   document.getElementById('tailFilter6').innerHTML = tail6Html;
