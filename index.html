@@ -51,6 +51,12 @@ body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f
 @keyframes spin { to { transform:rotate(360deg); } }
 .filter-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; align-items:center; }
 .filter-row label { font-size:13px; color:#666; min-width:60px; }
+/* 高级过滤(位置交集+质合/奇偶)：每个过滤器=标签+选项作为一个整体单元，同行显示，覆盖移动端纵向堆叠 */
+#posAdvFilter5 .filter-row, #posAdvFilter6 .filter-row { flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+#posAdvFilter5 .filter-item, #posAdvFilter6 .filter-item { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:0 0 auto; }
+#posAdvFilter5 .filter-item label, #posAdvFilter6 .filter-item label { flex:0 0 auto; white-space:nowrap; min-width:auto; }
+#posAdvFilter5 .filter-item .radio-group, #posAdvFilter6 .filter-item .radio-group { flex:0 1 auto; }
+#posAdvFilter5 .filter-item .mselect, #posAdvFilter6 .filter-item .mselect { flex:0 1 auto; width:auto; min-width:80px; }
 .number-grid { display:flex; flex-wrap:wrap; gap:4px; }
 .number-grid label { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:1px solid #ddd; cursor:pointer; font-size:13px; transition:all .15s; background:#fafafa; min-width:unset; }
 .number-grid label:hover { border-color:#d32f2f; background:#ffebee; }
@@ -1496,48 +1502,48 @@ function initUI() {
     <div class="adv-row"><label>D交集:</label><select id="t5_pd"><option value="">不限</option></select></div>
     <div class="adv-row"><label>E交集:</label><select id="t5_pe"><option value="">不限</option></select></div>
     <div class="filter-row">
-      <label>A质合:</label><div class="radio-group" id="t5_zhihe_a"><label><input type="radio" name="t5_zhihe_a" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_a" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_a" value="合数"> 合数</label></div>
-      <label style="margin-left:16px;">A奇偶:</label><div class="radio-group" id="t5_jiou_a"><label><input type="radio" name="t5_jiou_a" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_a" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_a" value="偶"> 偶</label></div>
+      <span class="filter-item"><label>A质合:</label><div class="radio-group" id="t5_zhihe_a"><label><input type="radio" name="t5_zhihe_a" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_a" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_a" value="合数"> 合数</label></div></span>
+      <span class="filter-item"><label>A奇偶:</label><div class="radio-group" id="t5_jiou_a"><label><input type="radio" name="t5_jiou_a" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_a" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_a" value="偶"> 偶</label></div></span>
     </div>
     <div class="filter-row">
-      <label>B质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_b" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_b" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_b" value="合数"> 合数</label></div>
-      <label style="margin-left:16px;">B奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_b" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_b" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_b" value="偶"> 偶</label></div>
+      <span class="filter-item"><label>B质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_b" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_b" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_b" value="合数"> 合数</label></div></span>
+      <span class="filter-item"><label>B奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_b" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_b" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_b" value="偶"> 偶</label></div></span>
     </div>
     <div class="filter-row">
-      <label>C质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_c" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_c" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_c" value="合数"> 合数</label></div>
-      <label style="margin-left:16px;">C奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_c" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_c" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_c" value="偶"> 偶</label></div>
+      <span class="filter-item"><label>C质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_c" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_c" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_c" value="合数"> 合数</label></div></span>
+      <span class="filter-item"><label>C奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_c" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_c" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_c" value="偶"> 偶</label></div></span>
     </div>
     <div class="filter-row">
-      <label>D质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_d" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_d" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_d" value="合数"> 合数</label></div>
-      <label style="margin-left:16px;">D奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_d" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_d" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_d" value="偶"> 偶</label></div>
+      <span class="filter-item"><label>D质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_d" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_d" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_d" value="合数"> 合数</label></div></span>
+      <span class="filter-item"><label>D奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_d" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_d" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_d" value="偶"> 偶</label></div></span>
     </div>
     <div class="filter-row">
-      <label>E质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_e" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_e" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_e" value="合数"> 合数</label></div>
-      <label style="margin-left:16px;">E奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_e" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_e" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_e" value="偶"> 偶</label></div>
+      <span class="filter-item"><label>E质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_e" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_e" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_e" value="合数"> 合数</label></div></span>
+      <span class="filter-item"><label>E奇偶:</label><div class="radio-group"><label><input type="radio" name="t5_jiou_e" value="" checked> 不限</label><label><input type="radio" name="t5_jiou_e" value="奇"> 奇</label><label><input type="radio" name="t5_jiou_e" value="偶"> 偶</label></div></span>
     </div>
     <div class="filter-row">
-      <label>S_AE交集:</label><select id="t5_sae_inter"><option value="">不限</option></select>
-      <label>S_AE质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sae" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sae" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sae" value="合数"> 合数</label></div>
+      <span class="filter-item"><label>S_AE交集:</label><select id="t5_sae_inter"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>S_AE质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sae" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sae" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sae" value="合数"> 合数</label></div></span>
     </div>
     <div class="filter-row">
-      <label>D_EA交集:</label><select id="t5_dea_inter"><option value="">不限</option></select>
-      <label>D_EA质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_dea" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_dea" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_dea" value="合数"> 合数</label></div>
+      <span class="filter-item"><label>D_EA交集:</label><select id="t5_dea_inter"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>D_EA质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_dea" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_dea" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_dea" value="合数"> 合数</label></div></span>
     </div>
     <div class="filter-row">
-      <label>S_BD交集:</label><select id="t5_sbd_inter"><option value="">不限</option></select>
-      <label>S_BD质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sbd" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sbd" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sbd" value="合数"> 合数</label></div>
+      <span class="filter-item"><label>S_BD交集:</label><select id="t5_sbd_inter"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>S_BD质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sbd" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sbd" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sbd" value="合数"> 合数</label></div></span>
     </div>
     <div class="filter-row">
-      <label>D_DB交集:</label><select id="t5_ddb_inter"><option value="">不限</option></select>
-      <label>D_DB质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_ddb" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_ddb" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_ddb" value="合数"> 合数</label></div>
+      <span class="filter-item"><label>D_DB交集:</label><select id="t5_ddb_inter"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>D_DB质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_ddb" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_ddb" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_ddb" value="合数"> 合数</label></div></span>
     </div>
     <div class="filter-row">
-      <label>S_ABDE交集:</label><select id="t5_sabde_inter"><option value="">不限</option></select>
-      <label>S_ABDE质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sabde" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sabde" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sabde" value="合数"> 合数</label></div>
+      <span class="filter-item"><label>S_ABDE交集:</label><select id="t5_sabde_inter"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>S_ABDE质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_sabde" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_sabde" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_sabde" value="合数"> 合数</label></div></span>
     </div>
     <div class="filter-row">
-      <label>D_AEBD交集:</label><select id="t5_daebd_inter"><option value="">不限</option></select>
-      <label>D_AEBD质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_daebd" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_daebd" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_daebd" value="合数"> 合数</label></div>
+      <span class="filter-item"><label>D_AEBD交集:</label><select id="t5_daebd_inter"><option value="">不限</option></select></span>
+      <span class="filter-item"><label>D_AEBD质合:</label><div class="radio-group"><label><input type="radio" name="t5_zhihe_daebd" value="" checked> 不限</label><label><input type="radio" name="t5_zhihe_daebd" value="质数"> 质数</label><label><input type="radio" name="t5_zhihe_daebd" value="合数"> 合数</label></div></span>
     </div>
   `;
   document.getElementById('posAdvFilter5').innerHTML = posAdv5Html;
@@ -1689,12 +1695,12 @@ function initUI() {
     <div class="adv-row"><label>D交集:</label><select id="t6_pd"><option value="">不限</option></select></div>
     <div class="adv-row"><label>E交集:</label><select id="t6_pe"><option value="">不限</option></select></div>
     <div class="adv-row"><label>F交集:</label><select id="t6_pf"><option value="">不限</option></select></div>
-    <div class="filter-row"><label>A质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_a" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_a" value="质数">质</label><label><input type="radio" name="t6_zhihe_a" value="合数">合</label></div></div>
-    <div class="filter-row"><label>B质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_b" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_b" value="质数">质</label><label><input type="radio" name="t6_zhihe_b" value="合数">合</label></div></div>
-    <div class="filter-row"><label>C质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_c" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_c" value="质数">质</label><label><input type="radio" name="t6_zhihe_c" value="合数">合</label></div></div>
-    <div class="filter-row"><label>D质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_d" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_d" value="质数">质</label><label><input type="radio" name="t6_zhihe_d" value="合数">合</label></div></div>
-    <div class="filter-row"><label>E质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_e" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_e" value="质数">质</label><label><input type="radio" name="t6_zhihe_e" value="合数">合</label></div></div>
-    <div class="filter-row"><label>F质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_f" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_f" value="质数">质</label><label><input type="radio" name="t6_zhihe_f" value="合数">合</label></div></div>
+    <div class="filter-row"><span class="filter-item"><label>A质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_a" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_a" value="质数">质</label><label><input type="radio" name="t6_zhihe_a" value="合数">合</label></div></span></div>
+    <div class="filter-row"><span class="filter-item"><label>B质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_b" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_b" value="质数">质</label><label><input type="radio" name="t6_zhihe_b" value="合数">合</label></div></span></div>
+    <div class="filter-row"><span class="filter-item"><label>C质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_c" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_c" value="质数">质</label><label><input type="radio" name="t6_zhihe_c" value="合数">合</label></div></span></div>
+    <div class="filter-row"><span class="filter-item"><label>D质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_d" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_d" value="质数">质</label><label><input type="radio" name="t6_zhihe_d" value="合数">合</label></div></span></div>
+    <div class="filter-row"><span class="filter-item"><label>E质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_e" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_e" value="质数">质</label><label><input type="radio" name="t6_zhihe_e" value="合数">合</label></div></span></div>
+    <div class="filter-row"><span class="filter-item"><label>F质合:</label><div class="radio-group"><label><input type="radio" name="t6_zhihe_f" value="" checked>不限</label><label><input type="radio" name="t6_zhihe_f" value="质数">质</label><label><input type="radio" name="t6_zhihe_f" value="合数">合</label></div></span></div>
   `;
   document.getElementById('posAdvFilter6').innerHTML = posAdv6Html;
   createMultiSelect('t6_pa', generateNumberOptions(1, 30));
