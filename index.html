@@ -7,10 +7,9 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f0f2f5; color: #333; font-size: 14px; }
-.header { background: linear-gradient(135deg, #e53935, #d32f2f); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
-.header > div:first-child { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.header { background: linear-gradient(135deg, #e53935, #d32f2f); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .header h1 { font-size: 22px; }
-.header .sub { font-size: 13px; opacity: 0.85; white-space: nowrap; }
+.header .sub { font-size: 13px; opacity: 0.85;}
 .container { max-width: 100%; padding: 12px; }
 .tabs { display: flex; gap: 4px; margin-bottom: 12px; background: #fff; border-radius: 8px; padding: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .tab-btn { flex:1; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:15px; font-weight:600; background:transparent; color:#666; transition:all .2s; }
@@ -59,18 +58,18 @@ body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f
 .number-grid input[type="checkbox"]:checked + span { color:#fff; }
 .number-grid label:has(input:checked) { background:#d32f2f; border-color:#d32f2f; color:#fff; }
 .number-grid span { pointer-events:none; }
-select { padding:5px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#fff; min-width:80px; }
+select { flex:1; padding:5px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; background:#fff; min-width:80px; }
 select:focus { outline:none; border-color:#d32f2f; }
 input[type="text"] { padding:5px 10px; border:1px solid #ddd; border-radius:4px; font-size:13px; width:120px; }
 input[type="text"]:focus { outline:none; border-color:#d32f2f; }
 .radio-group { display:flex; gap:8px; align-items:center; }
 .radio-group label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:13px; }
 .btn { padding:8px 20px; border:none; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600; transition:all .2s; }
-.btn-primary { background:#d32f2f; color:#fff; }
+.btn-primary { background:#d32f2f; color:#fff; flex: 1;}
 .btn-primary:hover { background:#b71c1c; }
-.btn-success { background:#43a047; color:#fff; }
+.btn-success { background:#43a047; color:#fff; flex: 1; }
 .btn-success:hover { background:#2e7d32; }
-.btn-warning { background:#f57c00; color:#fff; }
+.btn-warning { background:#f57c00; color:#fff; flex: 1; }
 .btn-warning:hover { background:#e65100; }
 .btn-info { background:#1976d2; color:#fff; }
 .btn-info:hover { background:#0d47a1; }
@@ -136,6 +135,10 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
 }
 /* 横屏手机（宽而矮）：过滤预设下拉与保存/删除按钮占满整行 */
 @media (orientation: landscape) and (max-height: 500px) {
+  .header { padding: 4px 12px; }
+  .header h1 { font-size: 15px; }
+  .header > div:first-child { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .header .sub { display: inline-block; font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .preset-panel select { flex:1; min-width:0; }
   .preset-panel .btn-success, .preset-panel .btn-warning { flex:1; }
 }
