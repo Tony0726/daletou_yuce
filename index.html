@@ -1328,7 +1328,7 @@ async function fetchAndProcess() {
     recent200Draws = draws;
     const latest = draws[0];
     statusEl.textContent = '✅ 体彩官方数据';
-    statusEl.style.color = '#a5d6a7';
+    statusEl.style.color = '#ffcdd2';
     infoEl.textContent = '已加载 ' + Math.min(QISHU, draws.length) + ' 期数据 · 整组出现次数统计近 ' + countDrawsUsed + ' 期 (最新: ' + (latest.date || latest.issue) + ', 来源: 体彩官方, 操作时间: ' + clickTime + ')';
     logAction('获取成功: 最新开奖日期 ' + (latest.date || latest.issue));
     return true;
@@ -1344,7 +1344,7 @@ async function fetchAndProcess() {
       recent200Draws = gh;
       const latest = data[0];
       statusEl.textContent = '✅ GitHub镜像数据';
-      statusEl.style.color = '#a5d6a7';
+      statusEl.style.color = '#ffcdd2';
       infoEl.textContent = '已加载 ' + Math.min(QISHU, gh.length) + ' 期数据 · 整组出现次数统计近 ' + countDrawsUsed + ' 期 (最新: ' + (latest.date || latest.issue) + ', 来源: GitHub镜像, 操作时间: ' + clickTime + ')';
       logAction('获取成功: 最新开奖日期 ' + (latest.date || latest.issue));
       return true;
