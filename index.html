@@ -58,6 +58,11 @@ body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f
 #tab5 .section-body .filter-item label, #tab6 .section-body .filter-item label { flex:0 0 auto; white-space:nowrap; min-width:auto; }
 #tab5 .section-body .filter-item .radio-group, #tab6 .section-body .filter-item .radio-group { flex:0 1 auto; }
 #tab5 .section-body .filter-item .mselect, #tab6 .section-body .filter-item .mselect { flex:0 1 auto; width:auto; min-width:80px; }
+/* 后区蓝球：二位和值~路比 各过滤器(标签+下拉)保持同行 */
+#tabB .filter-row.inline-filters { flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+#tabB .filter-row.inline-filters .filter-item { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; flex:0 0 auto; }
+#tabB .filter-row.inline-filters .filter-item label { flex:0 0 auto; white-space:nowrap; min-width:auto; }
+#tabB .filter-row.inline-filters .filter-item .mselect { flex:0 1 auto; width:auto; min-width:80px; }
 .number-grid { display:flex; flex-wrap:wrap; gap:4px; }
 .number-grid label { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; border:1px solid #ddd; cursor:pointer; font-size:13px; transition:all .15s; background:#fafafa; min-width:unset; }
 .number-grid label:hover { border-color:#d32f2f; background:#ffebee; }
@@ -404,25 +409,41 @@ input[type="text"]:focus { outline:none; border-color:#d32f2f; }
     <div class="panel">
       <h2 class="collapse-head collapsed" onclick="togglePanel(this)">② 综合过滤</h2>
       <div class="panel-body collapsed">
-        <div class="filter-row">
-          <label>二位和值:</label>
-          <select id="tb3_sum"><option value="">不限</option></select>
-          <label >二位差值:</label>
-          <select id="tb3_diff"><option value="">不限</option></select>
-          <label >和值/差值:</label>
-          <select id="tb3_sum_diff"><option value="">不限</option></select>
+        <div class="filter-row inline-filters">
+          <div class="filter-item">
+            <label>二位和值:</label>
+            <select id="tb3_sum"><option value="">不限</option></select>
+          </div>
+          <div class="filter-item">
+            <label>二位差值:</label>
+            <select id="tb3_diff"><option value="">不限</option></select>
+          </div>
+          <div class="filter-item">
+            <label>和值/差值:</label>
+            <select id="tb3_sum_diff"><option value="">不限</option></select>
+          </div>
         </div>
       </div>
     </div>
     <div class="panel">
       <h2 class="collapse-head collapsed" onclick="togglePanel(this)">③ 比值过滤</h2>
       <div class="panel-body collapsed">
-        <div class="filter-row">
-          <label>质合比:</label><select id="tb3_zhihebi"><option value="">不限</option></select>
-          <label>奇偶比:</label><select id="tb3_jioubi"><option value="">不限</option></select>
-          <label>大小比:</label><select id="tb3_daxiaobi"><option value="">不限</option></select>
-          <label>大中小比:</label><select id="tb3_dazhongxiaobi"><option value="">不限</option></select>
-          <label>路比:</label><select id="tb3_lubi"><option value="">不限</option></select>
+        <div class="filter-row inline-filters">
+          <div class="filter-item">
+            <label>质合比:</label><select id="tb3_zhihebi"><option value="">不限</option></select>
+          </div>
+          <div class="filter-item">
+            <label>奇偶比:</label><select id="tb3_jioubi"><option value="">不限</option></select>
+          </div>
+          <div class="filter-item">
+            <label>大小比:</label><select id="tb3_daxiaobi"><option value="">不限</option></select>
+          </div>
+          <div class="filter-item">
+            <label>大中小比:</label><select id="tb3_dazhongxiaobi"><option value="">不限</option></select>
+          </div>
+          <div class="filter-item">
+            <label>路比:</label><select id="tb3_lubi"><option value="">不限</option></select>
+          </div>
         </div>
       </div>
     </div>
